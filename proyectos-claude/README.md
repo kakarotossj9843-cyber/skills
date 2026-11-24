@@ -5,5 +5,5 @@
 | 1 | [Tu propio Jarvis](01-jarvis/) — asistente 24 h con Gmail, Calendar, Notion y WhatsApp | ✅ |
 | 2 | [Segundo cerebro](02-segundo-cerebro/) — biblioteca infinita de contexto sobre ti (Obsidian + Claude) | ✅ |
 | 3 | [Panel de tu vida](03-panel-de-tu-vida/) — ventas, hábitos, tareas, negocio y dinero con gráficos | ✅ |
-| 4 | Agente de contenido | ⏳ |
+| 4 | [Agente de contenido](04-agente-de-contenido/) — competencia, noticias y guiones cada noche | ✅ |
 | 5 | Equipo de agentes | ⏳ |
