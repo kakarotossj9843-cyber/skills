@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Equipo de agentes</title>
+<style>
+  :root { --bg:#100905; --card:#1d120b; --card-2:#26170d; --orange:#ff7a3d; --orange-2:#ffb085; --soft:rgba(255,122,61,.35);
+    --line:rgba(255,122,61,.22); --text:#fff4ec; --text-2:#e2c9b8; --muted:#9c8472; --ok:#4cc38a; --bad:#ff6b6b; }
+  * { box-sizing:border-box; }
+  html { background:var(--bg); }
+  body { margin:0; min-height:100vh; color:var(--text); font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    background:radial-gradient(ellipse 900px 600px at 50% 200px, rgba(255,122,61,.16), transparent 70%) no-repeat, var(--bg); }
+  .wrap { max-width:1040px; margin:0 auto; padding:24px 16px 60px; }
+  h1 { margin:0; text-align:center; color:var(--orange); font-size:clamp(26px,5vw,38px); text-shadow:0 0 24px rgba(255,122,61,.45); }
+  .lead { text-align:center; color:var(--muted); margin:6px 0 22px; font-size:14px; }
+
+  /* Organigrama */
+  .org { position:relative; max-width:640px; margin:0 auto; }
+  .org svg.links { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; overflow:visible; }
+  .org svg.links path { fill:none; stroke:var(--soft); stroke-width:2; stroke-dasharray:4 6; }
+  .org svg.links path.on { stroke:var(--orange); animation:flow .8s linear infinite; }
+  @keyframes flow { to { stroke-dashoffset:-20; } }
+  .boss-row { display:flex; justify-content:center; }
+  .boss { display:flex; align-items:center; gap:14px; padding:16px 26px; border-radius:16px; background:var(--card); border:2px solid var(--orange);
+    box-shadow:0 0 28px rgba(255,122,61,.35); position:relative; }
+  .boss .name { font-size:22px; font-weight:800; }
+  .crown { position:absolute; top:-6px; left:62px; width:30px; opacity:0; transition:opacity .4s, transform .4s; transform:translateY(6px); }
+  .boss.trabajando .crown, .boss.hecho .crown { opacity:1; transform:none; }
+  .star { width:40px; height:40px; color:var(--orange); }
+  .working .star, .trabajando .star { animation:spin 3s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  .sub-pill { display:block; width:max-content; margin:26px auto 22px; padding:6px 16px; border-radius:999px; background:var(--card-2); border:1px solid var(--soft); font-weight:800; font-size:14px; }
+  .team { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+  .agent { background:var(--card); border:1.5px solid var(--line); border-radius:14px; padding:12px 8px 14px; text-align:center; transition:all .3s; opacity:.55; }
+  .agent.trabajando { opacity:1; border-color:var(--orange); box-shadow:0 0 22px rgba(255,122,61,.35); }
+  .agent.hecho { opacity:1; border-color:var(--soft); }
+  .agent.error { opacity:1; border-color:var(--bad); }
+  .agent .star { width:30px; height:30px; margin:0 auto; display:block; }
+  .agent .n { font-weight:800; margin-top:6px; }
+  .agent .slot { width:16px; height:34px; border-radius:999px; margin:10px auto 0; border:1.5px solid var(--line); background:var(--card-2); position:relative; overflow:hidden; }
+  .agent .slot::after { content:""; position:absolute; left:0; right:0; bottom:0; height:0; background:var(--orange); transition:height .4s; }
+  .agent.trabajando .slot::after { height:100%; animation:pulse 1.2s ease-in-out infinite; }
+  .agent.hecho .slot::after { height:100%; background:var(--orange-2); }
+  @keyframes pulse { 50% { opacity:.45; } }
+  .agent .st { font-size:11.5px; color:var(--muted); margin-top:8px; min-height:30px; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
+  @media (max-width:560px) { .team { grid-template-columns:repeat(2,1fr); } .org svg.links { display:none; } }
+
+  .ask { margin:30px auto 0; max-width:760px; }
+  textarea { width:100%; min-height:86px; resize:vertical; font:inherit; font-size:15px; padding:14px; border-radius:14px; border:1px solid var(--soft); background:var(--card); color:var(--text); }
+  .ask-row { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; align-items:center; }
+  .chip { font-size:12.5px; padding:6px 10px; border-radius:999px; border:1px solid var(--line); background:transparent; color:var(--text-2); cursor:pointer; }
+  .chip:hover { border-color:var(--orange); color:var(--text); }
+  button.primary { margin-left:auto; font:inherit; font-weight:800; padding:11px 20px; border-radius:12px; border:0; background:var(--orange); color:#2a1105; cursor:pointer; box-shadow:0 0 20px rgba(255,122,61,.4); }
+  button.primary:disabled { opacity:.5; cursor:not-allowed; }
+  select { font:inherit; font-size:13px; padding:7px 10px; border-radius:10px; border:1px solid var(--line); background:var(--card); color:var(--text); max-width:100%; }
+  .box h2 > span { min-width:0; display:flex; justify-content:flex-end; flex:1; }
+  .box h2 select { width:100%; max-width:300px; text-overflow:ellipsis; }
+
+  .cols { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:28px; }
+  @media (max-width:820px) { .cols { grid-template-columns:1fr; } }
+  .box { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:14px; min-width:0; }
+  .box h2 { margin:0 0 10px; font-size:13px; text-transform:uppercase; letter-spacing:.05em; color:var(--text-2); display:flex; justify-content:space-between; gap:8px; align-items:center; }
+  .feed { max-height:460px; overflow-y:auto; display:flex; flex-direction:column; gap:8px; }
+  .ev { display:grid; grid-template-columns:26px 1fr; gap:8px; font-size:13.5px; line-height:1.45; }
+  .ev .who { width:26px; height:26px; border-radius:50%; display:grid; place-items:center; font-size:13px; background:var(--card-2); border:1px solid var(--line); }
+  .ev .body { color:var(--text-2); white-space:pre-wrap; word-break:break-word; }
+  .ev .body b { color:var(--text); }
+  .ev.resultado .body, .ev.entrega .body { background:var(--card-2); padding:8px 10px; border-radius:10px; border:1px solid var(--line); }
+  .ev.entrega .body { border-color:var(--orange); color:var(--text); }
+  .ev.error .body { color:var(--bad); }
+  .files { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
+  .files button { font:inherit; font-size:12.5px; padding:6px 10px; border-radius:10px; border:1px solid var(--line); background:var(--card-2); color:var(--text-2); cursor:pointer; }
+  .files button.on { border-color:var(--orange); color:var(--text); }
+  iframe { width:100%; height:460px; border:1px solid var(--line); border-radius:12px; background:#fff; }
+  pre.md { white-space:pre-wrap; word-break:break-word; margin:0; max-height:460px; overflow:auto; font:14px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace; color:var(--text-2); background:var(--card-2); padding:12px; border-radius:12px; }
+  .empty { color:var(--muted); font-size:13.5px; padding:18px 4px; text-align:center; }
+  .usage { color:var(--muted); font-size:12px; font-weight:400; text-transform:none; letter-spacing:0; }
+  a.open { color:var(--orange-2); font-size:12.5px; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute"><defs>
+  <symbol id="star" viewBox="0 0 40 40"><g stroke="currentColor" stroke-width="3.2" stroke-linecap="round">
+    <path d="M20 3v34M3 20h34M8 8l24 24M32 8L8 32M12 4.5l16 31M28 4.5l-16 31M4.5 12l31 16M4.5 28l31-16"/></g></symbol>
+</defs></svg>
+
+<div class="wrap">
+  <h1>Equipo de agentes</h1>
+  <div class="lead">Le das un encargo al jefe; él lo reparte entre sus subagentes, que trabajan a la vez, y te entrega el resultado revisado.</div>
+
+  <div class="org" id="org">
+    <svg class="links" id="links"></svg>
+    <div class="boss-row"><div class="boss" id="a-jefe">
+      <svg class="crown" viewBox="0 0 30 20"><path d="M2 18 L4 5 L10 11 L15 2 L20 11 L26 5 L28 18 Z" fill="var(--orange)"/></svg>
+      <svg class="star"><use href="#star"/></svg><div class="name">El jefe</div></div></div>
+    <span class="sub-pill" id="sub-pill">Subagentes</span>
+    <div class="team">
+      <div class="agent" id="a-busca"><svg class="star"><use href="#star"/></svg><div class="n">Busca</div><div class="slot"></div><div class="st"></div></div>
+      <div class="agent" id="a-escribe"><svg class="star"><use href="#star"/></svg><div class="n">Escribe</div><div class="slot"></div><div class="st"></div></div>
+      <div class="agent" id="a-disena"><svg class="star"><use href="#star"/></svg><div class="n">Diseña</div><div class="slot"></div><div class="st"></div></div>
+      <div class="agent" id="a-revisa"><svg class="star"><use href="#star"/></svg><div class="n">Revisa</div><div class="slot"></div><div class="st"></div></div>
+    </div>
+  </div>
+
+  <div class="ask">
+    <textarea id="encargo" placeholder="¿Qué necesitas? Ej.: «Crea una landing para mi curso de IA para emprendedores: investiga la competencia, escribe los textos y diséñala»"></textarea>
+    <div class="ask-row">
+      <button class="chip" data-ex="Investiga las 5 tendencias de IA más importantes de este mes para pequeños negocios, escribe un artículo de blog de 800 palabras y diseña una infografía en HTML que lo resuma.">📰 Artículo + infografía</button>
+      <button class="chip" data-ex="Crea una landing page para un curso online de productividad con IA (precio 97 €): investiga cómo venden cursos similares, escribe los textos persuasivos y diseña la landing en HTML.">🚀 Landing de curso</button>
+      <button class="chip" data-ex="Diseña un carrusel de Instagram de 6 diapositivas (HTML, formato 1080x1350 cada una) con 6 consejos para usar Claude en el trabajo, con textos cortos y potentes.">📱 Carrusel</button>
+      <button class="primary" id="go">Encargar</button>
+    </div>
+  </div>
+
+  <div class="cols">
+    <div class="box">
+      <h2>Actividad <span><select id="jobs" aria-label="Trabajos"></select></span></h2>
+      <div class="feed" id="feed"><div class="empty">Aquí verás en directo cómo trabaja el equipo.</div></div>
+    </div>
+    <div class="box">
+      <h2>Entregables <span class="usage" id="usage"></span></h2>
+      <div class="files" id="files"></div>
+      <div id="preview"><div class="empty">Los archivos aparecerán aquí.</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const WHO = { jefe:'👑', busca:'🔎', escribe:'✍️', disena:'🎨', revisa:'✅' };
+const NAME = { jefe:'El jefe', busca:'Busca', escribe:'Escribe', disena:'Diseña', revisa:'Revisa' };
+let token = ''; try { token = localStorage.getItem('equipo-token') || ''; } catch (e) {}
+let jobId = null, since = 0, timer = null, current = null, lastFiles = '', lastState = null;
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+
+async function api(path, opts = {}) {
+  opts.headers = Object.assign({ 'x-token': token }, opts.body ? { 'content-type':'application/json' } : {}, opts.headers || {});
+  const r = await fetch(path, opts);
+  if (r.status === 401) { token = prompt('Token (EQUIPO_WEB_TOKEN):') || ''; try { localStorage.setItem('equipo-token', token); } catch (e) {} return api(path, opts); }
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.detail || r.statusText);
+  return j;
+}
+
+function drawLinks(states) {
+  const org = $('org'), svg = $('links'), o = org.getBoundingClientRect(), b = $('a-jefe').getBoundingClientRect(), p = $('sub-pill').getBoundingClientRect();
+  const bx = b.left + b.width / 2 - o.left, by = b.bottom - o.top, px = p.left + p.width / 2 - o.left;
+  let d = `<path class="${states && states.jefe === 'trabajando' ? 'on' : ''}" d="M${bx},${by} L${px},${p.top - o.top}"/>`;
+  ['busca', 'escribe', 'disena', 'revisa'].forEach(k => {
+    const a = $('a-' + k).getBoundingClientRect(), ax = a.left + a.width / 2 - o.left;
+    d += `<path class="${states && states[k] === 'trabajando' ? 'on' : ''}" d="M${px},${p.bottom - o.top} C${px},${(p.bottom + a.top) / 2 - o.top} ${ax},${(p.bottom + a.top) / 2 - o.top} ${ax},${a.top - o.top}"/>`;
+  });
+  svg.innerHTML = d;
+}
+
+function renderAgents(ag) {
+  const st = {};
+  for (const k in ag) { st[k] = ag[k].estado; const el = $('a-' + k); el.className = (k === 'jefe' ? 'boss ' : 'agent ') + ag[k].estado;
+    const s = el.querySelector('.st'); if (s) s.textContent = ag[k].estado === 'trabajando' ? ag[k].tarea : ag[k].estado === 'hecho' ? `✓ ${ag[k].trabajos} tarea${ag[k].trabajos > 1 ? 's' : ''}` : ag[k].estado === 'error' ? 'Error' : 'Libre'; }
+  drawLinks(st);
+}
+
+function addEvents(evs) {
+  const feed = $('feed');
+  if (since === 0) feed.innerHTML = '';
+  const nearBottom = feed.scrollHeight - feed.scrollTop - feed.clientHeight < 60;
+  for (const e of evs) {
+    const div = document.createElement('div'); div.className = 'ev ' + e.tipo;
+    const label = e.tipo === 'inicio' && e.agente !== 'jefe' ? 'empieza: ' : e.tipo === 'resultado' ? 'termina:\n' : e.tipo === 'entrega' ? '📦 Entrega final:\n' : '';
+    div.innerHTML = `<div class="who" title="${NAME[e.agente]}">${WHO[e.agente] || '•'}</div><div class="body"><b>${NAME[e.agente]}</b> ${esc(label)}${esc(e.texto)}</div>`;
+    feed.appendChild(div);
+  }
+  if (nearBottom || since === 0) feed.scrollTop = feed.scrollHeight;
+}
+
+function fileUrl(f) { return `/api/trabajos/${jobId}/archivos/${f.split('/').map(encodeURIComponent).join('/')}${token ? '?token=' + encodeURIComponent(token) : ''}`; }
+async function show(f) {
+  current = f; document.querySelectorAll('#files button').forEach(b => b.classList.toggle('on', b.dataset.f === f));
+  const pv = $('preview'), url = fileUrl(f);
+  if (/\.(html|svg)$/i.test(f)) pv.innerHTML = `<iframe sandbox="" src="${url}" title="${esc(f)}"></iframe><a class="open" href="${url}" target="_blank" rel="noopener">Abrir en pestaña nueva ↗</a>`;
+  else { const t = await fetch(url, { headers:{ 'x-token': token } }).then(r => r.text()); pv.innerHTML = `<pre class="md">${esc(t)}</pre>`; }
+}
+function renderFiles(d) {
+  const list = d.entregables?.length && d.estado !== 'trabajando' ? d.entregables : d.archivos, key = list.join('|');
+  if (key === lastFiles) return; lastFiles = key;
+  $('files').innerHTML = list.map(f => `<button data-f="${esc(f)}">${/\.(html|svg)$/.test(f) ? '🎨' : '📄'} ${esc(f)}</button>`).join('');
+  $('files').querySelectorAll('button').forEach(b => b.onclick = () => show(b.dataset.f));
+  if (!list.length) $('preview').innerHTML = '<div class="empty">Los archivos aparecerán aquí.</div>';
+  else if (!current || !list.includes(current)) show(list.find(f => /\.html$/.test(f)) || list[0]);
+}
+
+async function poll() {
+  clearTimeout(timer); if (!jobId) return;
+  try {
+    const d = await api(`/api/trabajos/${jobId}?desde=${since}`);
+    if (lastState === 'trabajando' && d.estado !== 'trabajando') { current = null; lastFiles = ''; }
+    lastState = d.estado;
+    addEvents(d.eventos); since = d.total_eventos; renderAgents(d.agentes); renderFiles(d);
+    $('usage').textContent = d.uso.salida ? `${Math.round((d.uso.entrada + d.uso.salida) / 1000)}K tokens` : '';
+    $('go').disabled = d.estado === 'trabajando';
+    if (d.estado === 'trabajando') timer = setTimeout(poll, 1200);
+    else if (d.estado === 'error') addEvents([{ agente:'jefe', tipo:'error', texto: d.error || 'Error' }]);
+  } catch (e) { timer = setTimeout(poll, 3000); }
+}
+function open(id) { jobId = id; since = 0; current = null; lastFiles = ''; lastState = null; poll(); }
+
+async function loadJobs(select) {
+  const jobs = await api('/api/trabajos').catch(() => []);
+  $('jobs').innerHTML = jobs.length ? jobs.map(j => `<option value="${j.id}">${j.estado === 'trabajando' ? '⏳' : j.estado === 'hecho' ? '✓' : '✗'} ${esc(j.encargo.slice(0, 40))}</option>`).join('') : '<option>Sin trabajos</option>';
+  if (select && jobs[0]) { $('jobs').value = select === true ? jobs[0].id : select; open($('jobs').value); }
+}
+$('jobs').onchange = e => open(e.target.value);
+document.querySelectorAll('[data-ex]').forEach(c => c.onclick = () => { $('encargo').value = c.dataset.ex; $('encargo').focus(); });
+$('go').onclick = async () => {
+  const t = $('encargo').value.trim(); if (t.length < 5) { $('encargo').focus(); return; }
+  $('go').disabled = true;
+  try { const r = await api('/api/trabajos', { method:'POST', body: JSON.stringify({ encargo: t }) }); $('encargo').value = ''; await loadJobs(r.id); }
+  catch (e) { alert(e.message); $('go').disabled = false; }
+};
+addEventListener('resize', () => drawLinks());
+drawLinks(); loadJobs(true);
+</script>
+</body>
+</html>

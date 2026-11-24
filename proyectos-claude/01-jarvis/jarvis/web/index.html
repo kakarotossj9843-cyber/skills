@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jarvis</title>
+<style>
+  :root { --bg:#04161b; --grid:rgba(80,230,255,.06); --cyan:#5ee7ff; --orange:#ff7a4d; --text:#e8fbff; --muted:#7fb3bf; --card:rgba(10,40,48,.75); }
+  * { box-sizing:border-box; }
+  body { margin:0; min-height:100vh; background:var(--bg); color:var(--text); font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px); background-size:32px 32px;
+    display:flex; flex-direction:column; align-items:center; padding:24px 16px; }
+  h1 { color:var(--cyan); margin:0 0 4px; font-size:28px; text-shadow:0 0 18px rgba(94,231,255,.6); }
+  .sub { color:var(--muted); font-size:14px; margin-bottom:12px; }
+  .stage { position:relative; width:min(420px,100%); aspect-ratio:1; }
+  .ring { position:absolute; inset:0; margin:auto; border-radius:50%; border:3px solid var(--cyan); box-shadow:0 0 22px rgba(94,231,255,.45); }
+  .r1 { width:62%; height:62%; border-style:dashed; animation:spin 18s linear infinite; }
+  .r2 { width:48%; height:48%; border-width:5px; border-color:var(--cyan) transparent var(--cyan) transparent; animation:spin 6s linear infinite reverse; }
+  .r3 { width:36%; height:36%; border-width:2px; opacity:.6; }
+  .core { position:absolute; inset:0; margin:auto; width:26%; height:26%; border-radius:50%; background:radial-gradient(#0d4e5c,#062a33);
+    display:grid; place-items:center; font-size:54px; color:var(--orange); text-shadow:0 0 16px var(--orange); }
+  .thinking .core { animation:pulse 1s ease-in-out infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  @keyframes pulse { 50% { transform:scale(1.08); filter:brightness(1.4); } }
+  .app { position:absolute; width:22%; text-align:center; font-size:12px; color:var(--muted); }
+  .app .ic { aspect-ratio:1; border-radius:18px; background:#fff; display:grid; place-items:center; font-size:30px; box-shadow:0 0 18px rgba(255,255,255,.15); }
+  .app.off .ic { opacity:.45; filter:grayscale(1); }
+  .a1 { left:0; top:2%; } .a2 { right:0; top:2%; } .a3 { left:0; bottom:2%; } .a4 { right:0; bottom:2%; }
+  .h24 { position:absolute; left:0; right:0; bottom:9%; text-align:center; font-size:30px; font-weight:800; color:var(--cyan); text-shadow:0 0 14px var(--cyan); pointer-events:none; }
+  .chat { width:min(560px,100%); display:flex; flex-direction:column; gap:10px; margin-top:8px; }
+  .log { display:flex; flex-direction:column; gap:8px; max-height:40vh; overflow-y:auto; }
+  .msg { padding:10px 14px; border-radius:14px; white-space:pre-wrap; line-height:1.4; font-size:15px; max-width:90%; }
+  .me { align-self:flex-end; background:var(--cyan); color:#032026; }
+  .bot { align-self:flex-start; background:var(--card); border:1px solid rgba(94,231,255,.3); }
+  form { display:flex; gap:8px; }
+  input { flex:1; min-width:0; padding:12px 14px; border-radius:12px; border:1px solid rgba(94,231,255,.4); background:#062830; color:var(--text); font-size:15px; }
+  button { padding:12px 16px; border-radius:12px; border:0; background:var(--cyan); color:#032026; font-weight:700; cursor:pointer; }
+  button.ghost { background:transparent; color:var(--cyan); border:1px solid var(--cyan); }
+  .pill { display:inline-block; background:var(--cyan); color:#032026; padding:6px 14px; border-radius:999px; font-weight:700; font-size:13px; }
+</style>
+</head>
+<body>
+  <h1>Tu propio Jarvis</h1>
+  <div class="sub"><span class="pill">Te resuelve el día a día</span></div>
+
+  <div class="stage" id="stage">
+    <div class="ring r1"></div><div class="ring r2"></div><div class="ring r3"></div>
+    <div class="core">✳</div>
+    <div class="app a1" data-k="gmail"><div class="ic">✉️</div>Correo</div>
+    <div class="app a2" data-k="whatsapp"><div class="ic">💬</div>WhatsApp</div>
+    <div class="app a3" data-k="calendar"><div class="ic">📅</div>Calendario</div>
+    <div class="app a4" data-k="notion"><div class="ic">📝</div>Notion</div>
+    <div class="h24">24 h</div>
+  </div>
+
+  <div class="chat">
+    <div class="log" id="log"></div>
+    <form id="f">
+      <input id="q" placeholder="Pídele algo a Jarvis…" autocomplete="off">
+      <button>Enviar</button>
+    </form>
+    <button class="ghost" id="brief" type="button">☀️ Resumen del día</button>
+  </div>
+
+<script>
+  const log = document.getElementById('log'), stage = document.getElementById('stage');
+  let token = '';
+  try { token = localStorage.getItem('jarvis-token') || ''; } catch (e) {}
+
+  function add(text, who) {
+    const d = document.createElement('div'); d.className = 'msg ' + who; d.textContent = text;
+    log.appendChild(d); log.scrollTop = log.scrollHeight;
+  }
+  async function call(path, body) {
+    stage.classList.add('thinking');
+    try {
+      const r = await fetch(path, { method:'POST', headers:{ 'content-type':'application/json', 'x-jarvis-token':token }, body: JSON.stringify(body || {}) });
+      if (r.status === 401) {
+        token = prompt('Token de Jarvis (JARVIS_WEB_TOKEN):') || '';
+        try { localStorage.setItem('jarvis-token', token); } catch (e) {}
+        return call(path, body);
+      }
+      const j = await r.json();
+      add(j.reply || j.detail || 'Error', 'bot');
+    } catch (e) { add('⚠️ ' + e.message, 'bot'); }
+    finally { stage.classList.remove('thinking'); }
+  }
+  document.getElementById('f').onsubmit = (e) => {
+    e.preventDefault(); const q = document.getElementById('q'); const t = q.value.trim(); if (!t) return;
+    add(t, 'me'); q.value = ''; call('/api/chat', { message: t });
+  };
+  document.getElementById('brief').onclick = () => { add('Resumen del día', 'me'); call('/api/brief'); };
+  fetch('/api/status').then(r => r.json()).then(s => {
+    document.querySelectorAll('.app').forEach(a => { if (!s.integrations[a.dataset.k]) { a.classList.add('off'); a.title = 'Modo demo: sin configurar'; } });
+  });
+</script>
+</body>
+</html>
