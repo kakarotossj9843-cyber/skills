@@ -4,6 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Equipo de agentes</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#1d120b">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Equipo">
 <style>
   :root { --bg:#100905; --card:#1d120b; --card-2:#26170d; --orange:#ff7a3d; --orange-2:#ffb085; --soft:rgba(255,122,61,.35);
     --line:rgba(255,122,61,.22); --text:#fff4ec; --text-2:#e2c9b8; --muted:#9c8472; --ok:#4cc38a; --bad:#ff6b6b; }
@@ -130,14 +137,14 @@
 const $ = id => document.getElementById(id);
 const WHO = { jefe:'👑', busca:'🔎', escribe:'✍️', disena:'🎨', revisa:'✅' };
 const NAME = { jefe:'El jefe', busca:'Busca', escribe:'Escribe', disena:'Diseña', revisa:'Revisa' };
-let token = ''; try { token = localStorage.getItem('equipo-token') || ''; } catch (e) {}
+let token = ''; try { token = localStorage.getItem('equipo-token') || localStorage.getItem('apps-token') || ''; } catch (e) {}
 let jobId = null, since = 0, timer = null, current = null, lastFiles = '', lastState = null;
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
 
 async function api(path, opts = {}) {
-  opts.headers = Object.assign({ 'x-token': token }, opts.body ? { 'content-type':'application/json' } : {}, opts.headers || {});
+  opts.headers = Object.assign({}, opts.body ? { 'content-type':'application/json' } : {}, opts.headers || {}, { 'x-token': token });
   const r = await fetch(path, opts);
-  if (r.status === 401) { token = prompt('Token (EQUIPO_WEB_TOKEN):') || ''; try { localStorage.setItem('equipo-token', token); } catch (e) {} return api(path, opts); }
+  if (r.status === 401) { const t = prompt('Contraseña de acceso:'); if (t === null) throw new Error('Hace falta la contraseña para entrar'); token = t.trim(); try { localStorage.setItem('equipo-token', token); localStorage.setItem('apps-token', token); } catch (e) {} return api(path, opts); }
   const j = await r.json().catch(() => ({}));
   if (!r.ok) throw new Error(j.detail || r.statusText);
   return j;
@@ -174,7 +181,7 @@ function addEvents(evs) {
   if (nearBottom || since === 0) feed.scrollTop = feed.scrollHeight;
 }
 
-function fileUrl(f) { return `/api/trabajos/${jobId}/archivos/${f.split('/').map(encodeURIComponent).join('/')}${token ? '?token=' + encodeURIComponent(token) : ''}`; }
+function fileUrl(f) { return `api/trabajos/${jobId}/archivos/${f.split('/').map(encodeURIComponent).join('/')}${token ? '?token=' + encodeURIComponent(token) : ''}`; }
 async function show(f) {
   current = f; document.querySelectorAll('#files button').forEach(b => b.classList.toggle('on', b.dataset.f === f));
   const pv = $('preview'), url = fileUrl(f);
@@ -193,7 +200,7 @@ function renderFiles(d) {
 async function poll() {
   clearTimeout(timer); if (!jobId) return;
   try {
-    const d = await api(`/api/trabajos/${jobId}?desde=${since}`);
+    const d = await api(`api/trabajos/${jobId}?desde=${since}`);
     if (lastState === 'trabajando' && d.estado !== 'trabajando') { current = null; lastFiles = ''; }
     lastState = d.estado;
     addEvents(d.eventos); since = d.total_eventos; renderAgents(d.agentes); renderFiles(d);
@@ -206,7 +213,7 @@ async function poll() {
 function open(id) { jobId = id; since = 0; current = null; lastFiles = ''; lastState = null; poll(); }
 
 async function loadJobs(select) {
-  const jobs = await api('/api/trabajos').catch(() => []);
+  const jobs = await api('api/trabajos').catch(() => []);
   $('jobs').innerHTML = jobs.length ? jobs.map(j => `<option value="${j.id}">${j.estado === 'trabajando' ? '⏳' : j.estado === 'hecho' ? '✓' : '✗'} ${esc(j.encargo.slice(0, 40))}</option>`).join('') : '<option>Sin trabajos</option>';
   if (select && jobs[0]) { $('jobs').value = select === true ? jobs[0].id : select; open($('jobs').value); }
 }
@@ -215,11 +222,12 @@ document.querySelectorAll('[data-ex]').forEach(c => c.onclick = () => { $('encar
 $('go').onclick = async () => {
   const t = $('encargo').value.trim(); if (t.length < 5) { $('encargo').focus(); return; }
   $('go').disabled = true;
-  try { const r = await api('/api/trabajos', { method:'POST', body: JSON.stringify({ encargo: t }) }); $('encargo').value = ''; await loadJobs(r.id); }
+  try { const r = await api('api/trabajos', { method:'POST', body: JSON.stringify({ encargo: t }) }); $('encargo').value = ''; await loadJobs(r.id); }
   catch (e) { alert(e.message); $('go').disabled = false; }
 };
 addEventListener('resize', () => drawLinks());
 drawLinks(); loadJobs(true);
 </script>
+<script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});</script>
 </body>
 </html>

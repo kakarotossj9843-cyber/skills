@@ -64,3 +64,16 @@ async def chat(body: ChatIn, request: Request):
     except Exception as e:  # noqa: BLE001
         reply = f"⚠️ Error: {e}"
     return {"reply": reply}
+
+
+# --- App instalable (PWA): ficha de la app, service worker e iconos ---
+_PWA = {"manifest.webmanifest": "application/manifest+json", "sw.js": "text/javascript",
+        "icon-192.png": "image/png", "icon-512.png": "image/png"}
+
+
+@app.get("/{name}")
+def pwa_file(name: str):
+    if name not in _PWA:
+        raise HTTPException(404)
+    return FileResponse(Path(__file__).parent / "web" / name, media_type=_PWA[name],
+                        headers={"Cache-Control": "no-cache"})

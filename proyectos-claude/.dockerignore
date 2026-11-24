@@ -1,0 +1,11 @@
+.env
+**/.env
+.venv
+**/__pycache__
+**/*.db
+**/servidor.log
+**/salidas
+**/trabajos
+**/token.json
+**/credentials.json
+Dockerfile

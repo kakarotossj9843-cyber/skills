@@ -4,6 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Segundo cerebro</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#160b2b">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Cerebro">
 <style>
   :root { --bg:#0e0818; --purple:#b48cff; --purple2:#7c4dff; --orange:#ff7a4d; --text:#f3edff; --muted:#a89bc4; --card:rgba(40,24,70,.8); }
   * { box-sizing:border-box; }
@@ -44,18 +51,18 @@
 <script>
 const cv = document.getElementById('c'), ctx = cv.getContext('2d'), W = cv.width, H = cv.height;
 const AREA = { '10-Vida':'Tu vida', '20-Negocio':'Tu negocio', '30-Areas':'Tus áreas personales', '00-Bandeja':'Bandeja', 'raíz':'Perfil' };
-let token = ''; try { token = localStorage.getItem('cerebro-token') || ''; } catch (e) {}
+let token = ''; try { token = localStorage.getItem('cerebro-token') || localStorage.getItem('apps-token') || ''; } catch (e) {}
 let nodes = [], edges = [], mode = 'ask', history = [], hover = null;
 
 async function api(path, opts = {}) {
-  opts.headers = Object.assign({ 'x-token': token, 'content-type': 'application/json' }, opts.headers || {});
+  opts.headers = Object.assign({ 'content-type': 'application/json' }, opts.headers || {}, { 'x-token': token });
   const r = await fetch(path, opts);
-  if (r.status === 401) { token = prompt('Token (CEREBRO_WEB_TOKEN):') || ''; try { localStorage.setItem('cerebro-token', token); } catch (e) {} return api(path, opts); }
+  if (r.status === 401) { const t = prompt('Contraseña de acceso:'); if (t === null) throw new Error('Hace falta la contraseña para entrar'); token = t.trim(); try { localStorage.setItem('cerebro-token', token); localStorage.setItem('apps-token', token); } catch (e) {} return api(path, opts); }
   return r.json();
 }
 
 async function load() {
-  const g = await api('/api/graph');
+  const g = await api('api/graph');
   document.getElementById('count').textContent = g.nodes.length + ' notas';
   const old = Object.fromEntries(nodes.map(n => [n.id, n]));
   const core = { id:'__core', title:'', kind:'core', x:W/2, y:H/2, vx:0, vy:0, fixed:true };
@@ -107,7 +114,7 @@ function loop(t) { step(); draw(t); requestAnimationFrame(loop); }
 function pick(ev) { const r = cv.getBoundingClientRect(), x = (ev.clientX-r.left)*W/r.width, y = (ev.clientY-r.top)*H/r.height;
   return nodes.find(n => n.kind === 'note' && Math.hypot(n.x-x, n.y-y) < 22); }
 cv.onmousemove = e => { hover = pick(e) || null; };
-cv.onclick = async e => { const n = pick(e); if (!n) return; const r = await api('/api/note?path=' + encodeURIComponent(n.id));
+cv.onclick = async e => { const n = pick(e); if (!n) return; const r = await api('api/note?path=' + encodeURIComponent(n.id));
   const el = document.getElementById('note'); el.style.display = 'block'; el.textContent = r.content || 'No encontrada'; };
 
 const log = document.getElementById('log');
@@ -117,12 +124,13 @@ document.querySelectorAll('.modes button').forEach(b => b.onclick = () => {
   document.getElementById('q').placeholder = mode === 'ask' ? '¿Qué quieres saber o contarme?' : 'Pega una idea, apunte o nota de voz…'; });
 document.getElementById('f').onsubmit = async e => {
   e.preventDefault(); const q = document.getElementById('q'), t = q.value.trim(); if (!t) return; q.value = ''; add(t, 'me');
-  const r = await api('/api/chat', { method:'POST', body: JSON.stringify({ message:t, history, mode }) });
+  const r = await api('api/chat', { method:'POST', body: JSON.stringify({ message:t, history, mode }) });
   add(r.reply || r.detail, 'bot');
   if (mode === 'ask') history.push({ role:'user', content:t }, { role:'assistant', content:r.reply });
   load();
 };
 load().then(() => requestAnimationFrame(loop));
 </script>
+<script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});</script>
 </body>
 </html>

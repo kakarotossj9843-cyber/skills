@@ -101,3 +101,16 @@ async def whatsapp_webhook(request: Request, background: BackgroundTasks):
     if text:
         background.add_task(_handle_whatsapp, text)  # Twilio corta a los 15 s: respondemos aparte
     return Response("<Response/>", media_type="application/xml")
+
+
+# --- App instalable (PWA): ficha de la app, service worker e iconos ---
+_PWA = {"manifest.webmanifest": "application/manifest+json", "sw.js": "text/javascript",
+        "icon-192.png": "image/png", "icon-512.png": "image/png"}
+
+
+@app.get("/{name}")
+def pwa_file(name: str):
+    if name not in _PWA:
+        raise HTTPException(404)
+    return FileResponse(Path(__file__).parent / "web" / name, media_type=_PWA[name],
+                        headers={"Cache-Control": "no-cache"})

@@ -4,6 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Panel de tu vida</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#17130b">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Mi panel">
 <style>
   :root {
     --bg:#0f0c07; --surface:#17130b; --surface-2:#211a0e; --line:#3a2f19; --grid:#2a2213;
@@ -258,7 +265,7 @@
 const $ = (id) => document.getElementById(id);
 const MESES = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
 let D = null, BASE = 'USD', SYM = { USD: '$', PEN: 'S/', BOB: 'Bs', EUR: '€' }, token = '';
-try { token = localStorage.getItem('panel-token') || ''; } catch (e) {}
+try { token = localStorage.getItem('panel-token') || localStorage.getItem('apps-token') || ''; } catch (e) {}
 
 const fmt = (n, dec = 0) => new Intl.NumberFormat('es-ES', { minimumFractionDigits: dec, maximumFractionDigits: dec, useGrouping: 'always' }).format(n);
 const moneyIn = (n, code) => { const c = code || BASE, sym = SYM[c] || c, v = fmt(Math.abs(n), Math.abs(n) < 100 && n % 1 ? 2 : 0);
@@ -270,9 +277,9 @@ const esc = (s) => String(s).replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;',
 const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
 
 async function api(path, opts = {}) {
-  opts.headers = Object.assign({ 'x-token': token }, opts.body && !(opts.body instanceof FormData) ? { 'content-type': 'application/json' } : {}, opts.headers || {});
+  opts.headers = Object.assign({}, opts.body && !(opts.body instanceof FormData) ? { 'content-type': 'application/json' } : {}, opts.headers || {}, { 'x-token': token });
   const r = await fetch(path, opts);
-  if (r.status === 401) { token = prompt('Token del panel (PANEL_WEB_TOKEN):') || ''; try { localStorage.setItem('panel-token', token); } catch (e) {} return api(path, opts); }
+  if (r.status === 401) { const t = prompt('Contraseña de acceso:'); if (t === null) throw new Error('Hace falta la contraseña para entrar'); token = t.trim(); try { localStorage.setItem('panel-token', token); localStorage.setItem('apps-token', token); } catch (e) {} return api(path, opts); }
   const j = await r.json().catch(() => ({}));
   if (!r.ok) throw new Error(j.detail || r.statusText);
   return j;
@@ -416,47 +423,47 @@ function render() {
   $('rates-upd').textContent = D.monedas.actualizado ? 'Actualizado: ' + new Date(D.monedas.actualizado).toLocaleString('es-ES', { dateStyle:'short', timeStyle:'short' }) : 'Tipos de cambio manuales';
 }
 
-async function load() { try { D = await api('/api/dashboard'); render(); } catch (e) { toast('⚠️ ' + e.message); } }
+async function load() { try { D = await api('api/dashboard'); render(); } catch (e) { toast('⚠️ ' + e.message); } }
 
 // ---------- acciones ----------
-async function toggleHabit(id, done) { await post('/api/habitos/' + id, { done }); load(); }
-async function delHabit(id) { if (confirm('¿Quitar este hábito?')) { await api('/api/habitos/' + id, { method: 'DELETE' }); load(); } }
-async function toggleTask(id, done) { await post('/api/tareas/' + id, { done }); load(); }
-async function del(table, id) { await api(`/api/${table}/${id}`, { method: 'DELETE' }); load(); }
-async function addHabit(e) { e.preventDefault(); const v = e.target.n.value.trim(); if (v) { await post('/api/habitos', { name: v }); e.target.reset(); load(); } return false; }
-async function addTask(e) { e.preventDefault(); const v = e.target.n.value.trim(); if (v) { await post('/api/tareas', { name: v }); e.target.reset(); load(); } return false; }
+async function toggleHabit(id, done) { await post('api/habitos/' + id, { done }); load(); }
+async function delHabit(id) { if (confirm('¿Quitar este hábito?')) { await api('api/habitos/' + id, { method: 'DELETE' }); load(); } }
+async function toggleTask(id, done) { await post('api/tareas/' + id, { done }); load(); }
+async function del(table, id) { await api(`api/${table}/${id}`, { method: 'DELETE' }); load(); }
+async function addHabit(e) { e.preventDefault(); const v = e.target.n.value.trim(); if (v) { await post('api/habitos', { name: v }); e.target.reset(); load(); } return false; }
+async function addTask(e) { e.preventDefault(); const v = e.target.n.value.trim(); if (v) { await post('api/tareas', { name: v }); e.target.reset(); load(); } return false; }
 function openDlg(id) { $(id).showModal(); }
 function formObj(f) { const o = Object.fromEntries(new FormData(f)); for (const k in o) if (o[k] === '') delete o[k]; return o; }
 async function submitForm(e, path, msg) { e.preventDefault(); try { await post(path, formObj(e.target)); e.target.closest('dialog').close(); e.target.reset(); toast(msg); load(); } catch (err) { toast('⚠️ ' + err.message); } return false; }
-const submitSale = e => submitForm(e, '/api/ventas', 'Venta guardada');
-const submitMoney = e => submitForm(e, '/api/dinero', 'Movimiento guardado');
-const submitClient = e => submitForm(e, '/api/clientes', 'Cliente añadido');
+const submitSale = e => submitForm(e, 'api/ventas', 'Venta guardada');
+const submitMoney = e => submitForm(e, 'api/dinero', 'Movimiento guardado');
+const submitClient = e => submitForm(e, 'api/clientes', 'Cliente añadido');
 async function submitSettings(e) {
   e.preventDefault();
   try {
     const f = e.target, rates = {};
     f.querySelectorAll('[data-rate]').forEach(i => rates[i.dataset.rate] = +i.value);
-    await post('/api/ajustes', { key: 'rates', value: JSON.stringify(rates) });
-    await post('/api/ajustes', { key: 'sales_goal_month', value: f.sales_goal_month.value || '0' });
-    await post('/api/ajustes', { key: 'savings_goal_month', value: f.savings_goal_month.value || '0' });
-    await post('/api/ajustes', { key: 'base_currency', value: f.base_currency.value });  // al final: convierte los objetivos
+    await post('api/ajustes', { key: 'rates', value: JSON.stringify(rates) });
+    await post('api/ajustes', { key: 'sales_goal_month', value: f.sales_goal_month.value || '0' });
+    await post('api/ajustes', { key: 'savings_goal_month', value: f.savings_goal_month.value || '0' });
+    await post('api/ajustes', { key: 'base_currency', value: f.base_currency.value });  // al final: convierte los objetivos
     f.closest('dialog').close(); toast('Guardado'); load();
   } catch (err) { toast('⚠️ ' + err.message); }
   return false;
 }
 async function updateRates(b) {
   b.disabled = true;
-  try { await post('/api/tipos-de-cambio'); toast('Tipos de cambio actualizados'); await load(); }
+  try { await post('api/tipos-de-cambio'); toast('Tipos de cambio actualizados'); await load(); }
   catch (err) { toast('⚠️ ' + err.message); }
   b.disabled = false;
 }
 async function submitImport(e) {
   e.preventDefault(); const fd = new FormData(e.target);
-  try { const r = await api('/api/importar', { method: 'POST', body: fd }); e.target.closest('dialog').close(); toast(`${r.importadas} filas importadas${r.errores ? `, ${r.errores} con error` : ''}`); load(); }
+  try { const r = await api('api/importar', { method: 'POST', body: fd }); e.target.closest('dialog').close(); toast(`${r.importadas} filas importadas${r.errores ? `, ${r.errores} con error` : ''}`); load(); }
   catch (err) { toast('⚠️ ' + err.message); }
   return false;
 }
-async function syncStripe(b) { b.disabled = true; try { const r = await post('/api/stripe'); toast(`${r.cobros} cobros de Stripe`); load(); } catch (e) { toast('⚠️ ' + e.message); } b.disabled = false; }
+async function syncStripe(b) { b.disabled = true; try { const r = await post('api/stripe'); toast(`${r.cobros} cobros de Stripe`); load(); } catch (e) { toast('⚠️ ' + e.message); } b.disabled = false; }
 
 async function withClaude(btn, fn) {
   const rep = $('reply'), old = btn.innerHTML; btn.disabled = true; btn.innerHTML = '<span class="spin"></span>';
@@ -465,11 +472,12 @@ async function withClaude(btn, fn) {
   btn.disabled = false; btn.innerHTML = old; load();
 }
 function apuntar(e) { e.preventDefault(); const i = $('claude-in'), t = i.value.trim(); if (!t) return false; i.value = '';
-  withClaude(e.target.querySelector('.primary'), () => post('/api/claude/apuntar', { text: t })); return false; }
-function analizar(b) { withClaude(b, () => post('/api/claude/analisis')); }
+  withClaude(e.target.querySelector('.primary'), () => post('api/claude/apuntar', { text: t })); return false; }
+function analizar(b) { withClaude(b, () => post('api/claude/analisis')); }
 
 let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => D && render(), 150); });
 load();
 </script>
+<script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});</script>
 </body>
 </html>

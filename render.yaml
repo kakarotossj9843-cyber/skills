@@ -1,0 +1,22 @@
+# Despliegue en Render de las apps de proyectos-claude (ver proyectos-claude/GUIA-APK.md)
+services:
+  - type: web
+    name: mis-apps-claude
+    runtime: docker
+    rootDir: proyectos-claude
+    dockerfilePath: ./Dockerfile
+    plan: starter          # el disco persistente necesita un plan de pago (~7 USD/mes)
+    healthCheckPath: /salud
+    disk:
+      name: datos
+      mountPath: /data
+      sizeGB: 1
+    envVars:
+      - key: ANTHROPIC_API_KEY
+        sync: false        # Render te la pedirá al crear el servicio
+      - key: APP_PASSWORD
+        sync: false        # la contraseña para entrar a las apps
+      - key: DATA_DIR
+        value: /data
+      - key: TIMEZONE
+        value: America/Lima

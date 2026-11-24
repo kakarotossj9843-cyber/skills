@@ -1,0 +1,25 @@
+{
+  "id": "./",
+  "name": "Mis apps con Claude",
+  "short_name": "Mis apps",
+  "lang": "es",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#120d0a",
+  "theme_color": "#1a1410",
+  "description": "Jarvis, segundo cerebro, panel de tu vida, agente de contenido y equipo de agentes",
+  "icons": [
+    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ],
+  "shortcuts": [
+    {"name": "Jarvis", "url": "jarvis/", "icons": [{"src": "jarvis/icon-192.png", "sizes": "192x192"}]},
+    {"name": "Segundo cerebro", "url": "cerebro/", "icons": [{"src": "cerebro/icon-192.png", "sizes": "192x192"}]},
+    {"name": "Panel de tu vida", "url": "panel/", "icons": [{"src": "panel/icon-192.png", "sizes": "192x192"}]},
+    {"name": "Agente de contenido", "url": "contenido/", "icons": [{"src": "contenido/icon-192.png", "sizes": "192x192"}]}
+  ]
+}

@@ -18,7 +18,11 @@ app = FastAPI(title="Panel de tu vida")
 
 @app.middleware("http")
 async def auth(request: Request, call_next):
-    if request.url.path.startswith("/api/"):
+    path = request.scope["path"]
+    root = request.scope.get("root_path", "")
+    if root and path.startswith(root):  # montada dentro de servidor.py (p. ej. /panel/api/...)
+        path = path[len(root):]
+    if path.startswith("/api/"):
         if TOKEN:
             if not secrets.compare_digest(request.headers.get("x-token", ""), TOKEN):
                 from fastapi.responses import JSONResponse
@@ -186,3 +190,16 @@ async def analisis():
         return {"reply": await run_in_threadpool(agent.analizar)}
     except Exception as e:  # noqa: BLE001
         return {"reply": f"⚠️ {e}"}
+
+
+# --- App instalable (PWA): ficha de la app, service worker e iconos ---
+_PWA = {"manifest.webmanifest": "application/manifest+json", "sw.js": "text/javascript",
+        "icon-192.png": "image/png", "icon-512.png": "image/png"}
+
+
+@app.get("/{name}")
+def pwa_file(name: str):
+    if name not in _PWA:
+        raise HTTPException(404)
+    return FileResponse(Path(__file__).parent / "web" / name, media_type=_PWA[name],
+                        headers={"Cache-Control": "no-cache"})

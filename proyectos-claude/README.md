@@ -17,6 +17,13 @@ con interfaz propia, funciona en modo demostración sin configurar nada extra y 
 <img src="05-equipo-de-agentes/captura.png" width="19%">
 </p>
 
+## 📲 En el móvil (y como APK)
+
+Las cinco se pueden **instalar en Android e iPhone** como apps (icono en la pantalla de inicio) y convertir en
+**APK**. Sigue la guía paso a paso: **[GUIA-APK.md](GUIA-APK.md)**. En resumen: `servidor.py` las junta en una sola
+dirección (`/jarvis/`, `/cerebro/`, `/panel/`, `/contenido/`, `/equipo/`), se sube a Render con un clic
+(`render.yaml`), se instala desde el navegador y, si quieres, PWABuilder genera el APK.
+
 ## Arrancar los cinco a la vez
 
 ```bash
@@ -25,7 +32,9 @@ python -m venv .venv && source .venv/bin/activate     # Windows: .venv\Scripts\a
 pip install -r requirements.txt
 echo "ANTHROPIC_API_KEY=sk-ant-..." > .env
 (cd 03-panel-de-tu-vida && python -m panel.seed)      # opcional: datos de ejemplo para el panel
-python iniciar.py
+python iniciar.py          # cada app en su puerto (8000-8004)
+# o bien:
+python servidor.py         # las cinco en una sola dirección → http://localhost:8080
 ```
 
 ### Dónde va la clave

@@ -25,7 +25,11 @@ MIME = {".html": "text/html", ".svg": "image/svg+xml", ".md": "text/markdown", "
 
 @app.middleware("http")
 async def auth(request: Request, call_next):
-    if request.url.path.startswith("/api/"):
+    path = request.scope["path"]
+    root = request.scope.get("root_path", "")
+    if root and path.startswith(root):  # montada dentro de servidor.py (p. ej. /panel/api/...)
+        path = path[len(root):]
+    if path.startswith("/api/"):
         if TOKEN:
             sent = request.headers.get("x-token", "") or request.query_params.get("token", "")
             if not secrets.compare_digest(sent, TOKEN):
@@ -92,3 +96,16 @@ def get_file(job_id: str, name: str):
     headers = {"Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; img-src data:; font-src data:; sandbox",
                "X-Content-Type-Options": "nosniff"}
     return Response(p.read_bytes(), media_type=MIME[p.suffix.lower()] + "; charset=utf-8", headers=headers)
+
+
+# --- App instalable (PWA): ficha de la app, service worker e iconos ---
+_PWA = {"manifest.webmanifest": "application/manifest+json", "sw.js": "text/javascript",
+        "icon-192.png": "image/png", "icon-512.png": "image/png"}
+
+
+@app.get("/{name}")
+def pwa_file(name: str):
+    if name not in _PWA:
+        raise HTTPException(404)
+    return FileResponse(Path(__file__).parent / "web" / name, media_type=_PWA[name],
+                        headers={"Cache-Control": "no-cache"})

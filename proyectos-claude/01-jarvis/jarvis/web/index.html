@@ -4,6 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Jarvis</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#04161b">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Jarvis">
 <style>
   :root { --bg:#04161b; --grid:rgba(80,230,255,.06); --cyan:#5ee7ff; --orange:#ff7a4d; --text:#e8fbff; --muted:#7fb3bf; --card:rgba(10,40,48,.75); }
   * { box-sizing:border-box; }
@@ -65,7 +72,7 @@
 <script>
   const log = document.getElementById('log'), stage = document.getElementById('stage');
   let token = '';
-  try { token = localStorage.getItem('jarvis-token') || ''; } catch (e) {}
+  try { token = localStorage.getItem('jarvis-token') || localStorage.getItem('apps-token') || ''; } catch (e) {}
 
   function add(text, who) {
     const d = document.createElement('div'); d.className = 'msg ' + who; d.textContent = text;
@@ -76,8 +83,10 @@
     try {
       const r = await fetch(path, { method:'POST', headers:{ 'content-type':'application/json', 'x-jarvis-token':token }, body: JSON.stringify(body || {}) });
       if (r.status === 401) {
-        token = prompt('Token de Jarvis (JARVIS_WEB_TOKEN):') || '';
-        try { localStorage.setItem('jarvis-token', token); } catch (e) {}
+        const t = prompt('Contraseña de acceso:');
+        if (t === null) { add('Hace falta la contraseña para entrar.', 'bot'); return; }
+        token = t.trim();
+        try { localStorage.setItem('jarvis-token', token); localStorage.setItem('apps-token', token); } catch (e) {}
         return call(path, body);
       }
       const j = await r.json();
@@ -87,12 +96,13 @@
   }
   document.getElementById('f').onsubmit = (e) => {
     e.preventDefault(); const q = document.getElementById('q'); const t = q.value.trim(); if (!t) return;
-    add(t, 'me'); q.value = ''; call('/api/chat', { message: t });
+    add(t, 'me'); q.value = ''; call('api/chat', { message: t });
   };
-  document.getElementById('brief').onclick = () => { add('Resumen del día', 'me'); call('/api/brief'); };
-  fetch('/api/status').then(r => r.json()).then(s => {
+  document.getElementById('brief').onclick = () => { add('Resumen del día', 'me'); call('api/brief'); };
+  fetch('api/status').then(r => r.json()).then(s => {
     document.querySelectorAll('.app').forEach(a => { if (!s.integrations[a.dataset.k]) { a.classList.add('off'); a.title = 'Modo demo: sin configurar'; } });
   });
 </script>
+<script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});</script>
 </body>
 </html>

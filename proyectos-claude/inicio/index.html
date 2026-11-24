@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mis apps con Claude</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#1a1410">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Mis apps">
+<style>
+  :root { --bg:#120d0a; --card:#1f1813; --line:rgba(255,255,255,.08); --text:#fff7f0; --muted:#a8998b; --accent:#ff7a3d; }
+  * { box-sizing:border-box; }
+  html { background:var(--bg); }
+  body { margin:0; min-height:100vh; color:var(--text); font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    background:radial-gradient(ellipse 700px 500px at 50% 0, rgba(255,122,61,.14), transparent 70%) no-repeat, var(--bg);
+    padding:max(28px, env(safe-area-inset-top)) 16px 40px; }
+  .wrap { max-width:720px; margin:0 auto; }
+  header { text-align:center; margin-bottom:26px; }
+  header svg { width:54px; height:54px; color:var(--accent); }
+  h1 { margin:8px 0 4px; font-size:clamp(26px,6vw,34px); }
+  .sub { color:var(--muted); font-size:15px; }
+  .grid { display:grid; grid-template-columns:1fr; gap:12px; }
+  a.app { display:grid; grid-template-columns:64px 1fr 20px; align-items:center; gap:14px; padding:14px; border-radius:18px;
+    background:var(--card); border:1px solid var(--line); color:inherit; text-decoration:none; transition:transform .15s, border-color .15s; }
+  a.app:hover, a.app:focus-visible { transform:translateY(-2px); border-color:var(--c); outline:none; }
+  a.app:active { transform:scale(.98); }
+  a.app img { width:64px; height:64px; border-radius:16px; }
+  a.app b { font-size:17px; display:block; }
+  a.app span { color:var(--muted); font-size:13.5px; line-height:1.35; display:block; margin-top:2px; }
+  a.app i { color:var(--muted); font-style:normal; font-size:20px; }
+  .install { margin:26px 0 0; padding:16px; border-radius:18px; border:1px dashed rgba(255,122,61,.45); background:rgba(255,122,61,.06); }
+  .install h2 { margin:0 0 6px; font-size:16px; }
+  .install p { margin:6px 0; color:var(--muted); font-size:14px; line-height:1.45; }
+  .install button { margin-top:8px; font:inherit; font-weight:800; padding:11px 18px; border-radius:12px; border:0; background:var(--accent); color:#2a1105; cursor:pointer; }
+  .hidden { display:none; }
+  footer { text-align:center; color:var(--muted); font-size:12px; margin-top:26px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <svg viewBox="0 0 40 40" aria-hidden="true"><g stroke="currentColor" stroke-width="3.4" stroke-linecap="round"><path d="M20 3v34M3 20h34M8 8l24 24M32 8L8 32M12 4.5l16 31M28 4.5l-16 31M4.5 12l31 16M4.5 28l31-16"/></g></svg>
+    <h1>Mis apps con Claude</h1>
+    <div class="sub">Cinco herramientas que trabajan para ti</div>
+  </header>
+
+  <nav class="grid">
+    <a class="app" href="jarvis/" style="--c:#5ee7ff"><img src="jarvis/icon-192.png" alt=""><div><b>Tu propio Jarvis</b><span>Asistente 24 h con correo, calendario, Notion y WhatsApp</span></div><i>›</i></a>
+    <a class="app" href="cerebro/" style="--c:#b48cff"><img src="cerebro/icon-192.png" alt=""><div><b>Segundo cerebro</b><span>Tu biblioteca de contexto: vida, negocio y áreas personales</span></div><i>›</i></a>
+    <a class="app" href="panel/" style="--c:#f2b53a"><img src="panel/icon-192.png" alt=""><div><b>Panel de tu vida</b><span>Ventas, hábitos, tareas, negocio y dinero en soles, dólares y Bs</span></div><i>›</i></a>
+    <a class="app" href="contenido/" style="--c:#ff5fb0"><img src="contenido/icon-192.png" alt=""><div><b>Agente de contenido</b><span>Competencia, noticias y guiones mientras duermes</span></div><i>›</i></a>
+    <a class="app" href="equipo/" style="--c:#ff7a3d"><img src="equipo/icon-192.png" alt=""><div><b>Equipo de agentes</b><span>Un jefe que reparte el trabajo entre 4 especialistas</span></div><i>›</i></a>
+  </nav>
+
+  <section class="install" id="install">
+    <h2>📲 Instálala en tu móvil</h2>
+    <div id="android" class="hidden"><p>Pulsa el botón y aparecerá con su icono en tu pantalla de inicio, como cualquier app.</p><button id="btn">Instalar</button></div>
+    <div id="ios" class="hidden"><p>En iPhone: pulsa <b>Compartir</b> (el cuadrado con la flecha) y elige <b>«Añadir a pantalla de inicio»</b>.</p></div>
+    <div id="other"><p>En Android abre el menú ⋮ de Chrome y elige <b>«Instalar app»</b> o <b>«Añadir a pantalla de inicio»</b>. En iPhone, en Safari: <b>Compartir → Añadir a pantalla de inicio</b>.</p>
+      <p>También puedes instalar cada app por separado: ábrela y haz lo mismo desde su página.</p></div>
+  </section>
+  <footer>Hecho con Claude</footer>
+</div>
+<script>
+  const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+  if (standalone) document.getElementById('install').classList.add('hidden');
+  if (/iphone|ipad|ipod/i.test(navigator.userAgent)) { document.getElementById('ios').classList.remove('hidden'); document.getElementById('other').classList.add('hidden'); }
+  let deferred = null;
+  addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault(); deferred = e;
+    document.getElementById('android').classList.remove('hidden'); document.getElementById('other').classList.add('hidden');
+  });
+  document.getElementById('btn').onclick = async () => { if (!deferred) return; deferred.prompt(); await deferred.userChoice; deferred = null; };
+  addEventListener('appinstalled', () => document.getElementById('install').classList.add('hidden'));
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+</script>
+</body>
+</html>
