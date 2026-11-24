@@ -22,7 +22,7 @@ Todos los gráficos tienen tooltip al pasar el ratón y una vista de tabla («Ve
 cd 03-panel-de-tu-vida
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env               # pon tu ANTHROPIC_API_KEY
+cp .env.example .env   # opcional si ya tienes la clave en proyectos-claude/.env;
 python -m panel.seed               # (opcional) datos de ejemplo para verlo lleno
 uvicorn panel.server:app --port 8002
 ```

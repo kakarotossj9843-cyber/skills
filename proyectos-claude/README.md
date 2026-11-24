@@ -28,6 +28,12 @@ echo "ANTHROPIC_API_KEY=sk-ant-..." > .env
 python iniciar.py
 ```
 
+### Dónde va la clave
+
+Basta con **un solo `.env` en esta carpeta** (`proyectos-claude/.env`): lo leen los cinco proyectos, tanto con
+`python iniciar.py` como si arrancas uno suelto desde su carpeta. Si un proyecto tiene además su propio `.env`
+(por ejemplo con su nicho o sus integraciones), sus valores mandan sobre los del general.
+
 O entra en la carpeta de cada proyecto y sigue su README para arrancarlo por separado y configurar sus
 integraciones (Gmail, Notion, WhatsApp, Stripe…).
 
