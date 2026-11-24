@@ -13,6 +13,7 @@ load_dotenv(ROOT / ".env")
 
 VAULT = Path(os.getenv("VAULT_PATH", str(ROOT / "vault"))).expanduser().resolve()
 PROFILE = "PERFIL.md"
+IGNORED_FILES = {"CLAUDE.md", "00-Bandeja/LEEME.md"}
 IGNORED_DIRS = {".obsidian", ".trash", ".git", ".procesadas", "90-Plantillas"}
 LINK_RE = re.compile(r"\[\[([^\]|#]+)(?:#[^\]|]*)?(?:\|[^\]]*)?\]\]")
 WORD_RE = re.compile(r"\w+", re.UNICODE)
@@ -32,7 +33,10 @@ def _safe(rel: str) -> Path:
 def all_notes() -> list[Path]:
     out = []
     for p in VAULT.rglob("*.md"):
-        if not any(part in IGNORED_DIRS for part in p.relative_to(VAULT).parts):
+        r = p.relative_to(VAULT)
+        if r.as_posix() in IGNORED_FILES:
+            continue
+        if not any(part in IGNORED_DIRS for part in r.parts):
             out.append(p)
     return sorted(out)
 

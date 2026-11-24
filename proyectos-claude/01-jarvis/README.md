@@ -9,6 +9,8 @@ Asistente personal 24 h hecho con Claude. Conectado a **Correo (Gmail)**, **Cale
 - **Vigila tu bandeja** cada 30 min y te avisa solo si llega algo importante.
 - **Memoria**: recuerda personas, preferencias y rutinas que le cuentes.
 
+![Jarvis](captura.png)
+
 Sin configurar nada funciona en **modo demo** (datos de ejemplo). Cada integración se activa al poner sus claves.
 
 ## 1. Instalación

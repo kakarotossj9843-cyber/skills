@@ -51,7 +51,8 @@ DB_FILE = ROOT / _get("JARVIS_DB", "jarvis.db")
 
 
 def google_configured() -> bool:
-    return GOOGLE_TOKEN_FILE.exists() or GOOGLE_CREDENTIALS_FILE.exists()
+    """Gmail/Calendar son reales solo tras autorizar (python -m jarvis.setup_google crea token.json)."""
+    return GOOGLE_TOKEN_FILE.exists()
 
 
 def notion_configured() -> bool:

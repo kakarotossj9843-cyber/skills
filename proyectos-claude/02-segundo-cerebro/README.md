@@ -11,6 +11,8 @@ así que **cuanto más la usas, mejor te conoce**.
 - **PERFIL.md**: un resumen de quién eres que Claude lee en cada conversación (y actualiza él mismo).
 - **Grafo visual** de tus notas, como el del vídeo, con chat integrado.
 
+![Segundo cerebro](captura.png)
+
 ## Instalación
 
 ```bash
