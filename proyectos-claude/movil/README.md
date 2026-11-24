@@ -23,9 +23,10 @@ Cada app te lo pide al usarla por primera vez (o en el botón **✳ IA**). Puede
 
 | IA | Precio | Cómo conseguir la clave |
 |---|---|---|
-| **Google Gemini** (recomendado) | **Gratis**, con límites diarios | aistudio.google.com/apikey → *Create API key* (con tu cuenta de Google, sin tarjeta) |
-| **Groq** (Llama) | **Gratis**, con límites por minuto | console.groq.com/keys → *Create API Key* |
-| **OpenRouter** | **Gratis** con modelos `:free` | openrouter.ai/keys → *Create Key* |
+| **Google Gemini 3.8 Flash** (el más fácil) | **Gratis**, pero pocos usos al día | aistudio.google.com/apikey → *Create API key* (con tu cuenta de Google, sin tarjeta) |
+| **NVIDIA** (Kimi K2.6, GLM, Nemotron) | **Gratis**, ~40 peticiones/minuto: la que más rinde | build.nvidia.com → crear cuenta (verifica tu teléfono) → *Generate API Key* |
+| **Groq** (Qwen 3.8) | **Gratis**, el más rápido (~1.000 peticiones/día) | console.groq.com/keys → *Create API Key* |
+| **OpenRouter** (`openrouter/free`) | **Gratis**, pocos usos al día | openrouter.ai/keys → *Create Key* |
 | **Claude** (Anthropic) | De pago | console.anthropic.com → Billing (saldo) → API Keys |
 
 - La clave se guarda **solo en ese teléfono**. Si pasas las apps a otra persona, que ponga **su propia clave**.
@@ -34,7 +35,8 @@ Cada app te lo pide al usarla por primera vez (o en el botón **✳ IA**). Puede
 - Los planes gratuitos tienen límites: si sale «Has llegado al límite gratuito», espera un minuto (o al día siguiente).
   El **Equipo de agentes** hace muchas llamadas seguidas y es el que antes llega al límite.
 - En el plan gratuito de Gemini, Google puede usar lo que escribes para mejorar sus productos: no pongas datos muy sensibles.
-- Calidad: Claude es el más capaz; Gemini va muy bien para el día a día.
+- **¿Cuál elegir?** Para empezar, Gemini (solo necesitas tu cuenta de Google). Si se te acaban los usos del día,
+  pásate a **NVIDIA** (la mejor gratuita en calidad y cantidad) o a **Groq**. Claude sigue siendo el más capaz, pero es de pago.
 
 ## Tus datos
 

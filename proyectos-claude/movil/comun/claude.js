@@ -5,21 +5,26 @@
  * (Internamente todo habla el formato de mensajes de Claude; para los demás proveedores se traduce.) */
 (function () {
   const PROVIDERS = {
-    gemini: { name: 'Google Gemini — GRATIS (recomendado)', base: 'https://generativelanguage.googleapis.com/v1beta/openai', free: true,
-      model: 'gemini-2.5-flash', hint: 'AIza...', keyUrl: 'https://aistudio.google.com/apikey',
+    gemini: { name: 'Google Gemini 3.8 — GRATIS, el más fácil', base: 'https://generativelanguage.googleapis.com/v1beta/openai', free: true,
+      model: 'gemini-3.8-flash', hint: 'AIza...', keyUrl: 'https://aistudio.google.com/apikey',
       steps: ['Entra en <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> con tu cuenta de Google.',
         'Pulsa <b>Create API key</b> (crear clave). Es gratis, sin tarjeta.', 'Cópiala y pégala aquí.'],
-      note: 'Gratis con límites diarios. En el plan gratuito Google puede usar lo que escribes para mejorar sus productos: no pongas datos muy sensibles.' },
-    groq: { name: 'Groq (Llama) — GRATIS', base: 'https://api.groq.com/openai/v1', free: true,
-      model: 'llama-3.3-70b-versatile', hint: 'gsk_...', keyUrl: 'https://console.groq.com/keys',
+      note: 'Gratis, pero con pocos usos al día en el modelo 3.8 (si se acaban, prueba «gemini-3.5-flash-lite» o NVIDIA). En el plan gratuito Google puede usar lo que escribes para mejorar sus productos: no pongas datos muy sensibles.' },
+    nvidia: { name: 'NVIDIA (Kimi, GLM, Nemotron) — GRATIS, más usos al día', base: 'https://integrate.api.nvidia.com/v1', free: true,
+      model: 'moonshotai/kimi-k2.6', hint: 'nvapi-...', keyUrl: 'https://build.nvidia.com/settings/api-keys',
+      steps: ['Entra en <a href="https://build.nvidia.com/settings/api-keys" target="_blank" rel="noopener">build.nvidia.com</a> y crea una cuenta gratis (te pedirá verificar tu teléfono).',
+        'Pulsa <b>Generate API Key</b>.', 'Cópiala (empieza por nvapi-) y pégala aquí.'],
+      note: 'Gratis, sin tarjeta: unas 40 peticiones por minuto con modelos abiertos muy potentes. Ideal para el Equipo de agentes y el Agente de contenido.' },
+    groq: { name: 'Groq (Qwen) — GRATIS, el más rápido', base: 'https://api.groq.com/openai/v1', free: true,
+      model: 'qwen/qwen3.8-27b', hint: 'gsk_...', keyUrl: 'https://console.groq.com/keys',
       steps: ['Entra en <a href="https://console.groq.com/keys" target="_blank" rel="noopener">console.groq.com/keys</a> y crea una cuenta gratis.',
         'Pulsa <b>Create API Key</b>.', 'Cópiala y pégala aquí.'],
       note: 'Gratis con límites por minuto y por día. Muy rápido.' },
     openrouter: { name: 'OpenRouter — modelos GRATIS', base: 'https://openrouter.ai/api/v1', free: true,
-      model: 'meta-llama/llama-3.3-70b-instruct:free', hint: 'sk-or-...', keyUrl: 'https://openrouter.ai/keys',
+      model: 'openrouter/free', hint: 'sk-or-...', keyUrl: 'https://openrouter.ai/keys',
       steps: ['Entra en <a href="https://openrouter.ai/keys" target="_blank" rel="noopener">openrouter.ai/keys</a> y crea una cuenta.',
-        'Pulsa <b>Create Key</b>.', 'Cópiala y pégala aquí. Usa modelos que terminen en <b>:free</b>.'],
-      note: 'Los modelos «:free» son gratis con límites diarios.' },
+        'Pulsa <b>Create Key</b>.', 'Cópiala y pégala aquí. El modelo «openrouter/free» elige solo uno gratuito que sepa usar herramientas.'],
+      note: 'Gratis con límites diarios (pocos usos al día si no recargas saldo).' },
     claude: { name: 'Claude (Anthropic) — de pago, el más capaz', free: false,
       model: 'claude-opus-5-5', hint: 'sk-ant-...', keyUrl: 'https://console.anthropic.com/settings/keys',
       models: [['claude-opus-5-5', 'Claude Opus 5.5 — el más capaz'], ['claude-sonnet-5-5', 'Claude Sonnet 5.5 — más rápido y barato']],
@@ -36,6 +41,9 @@
     store.set('ia-proveedor', 'claude'); store.set('ia-clave-claude', store.get('claude-api-key'));
     if (store.get('claude-model')) store.set('ia-modelo-claude', store.get('claude-model'));
   }
+  // Modelos por defecto de la v1.1 que ya no son los mejores gratuitos: se actualizan solos
+  for (const [p, old] of [['gemini', 'gemini-2.5-flash'], ['groq', 'llama-3.3-70b-versatile'], ['openrouter', 'meta-llama/llama-3.3-70b-instruct:free']])
+    if (store.get('ia-modelo-' + p) === old) store.set('ia-modelo-' + p, PROVIDERS[p].model);
   const provider = () => (PROVIDERS[store.get('ia-proveedor')] ? store.get('ia-proveedor') : 'gemini');
   const key = (p = provider()) => (store.get('ia-clave-' + p) || '').trim();
   const model = (p = provider()) => store.get('ia-modelo-' + p) || PROVIDERS[p].model;
@@ -93,7 +101,8 @@
       const r = await fetch(baseUrl(p) + '/models', { headers: { Authorization: 'Bearer ' + key(p) } });
       const j = await r.json();
       let ids = (j.data || []).map((m) => String(m.id).replace(/^models\//, ''));
-      if (p === 'openrouter') ids = ids.filter((x) => x.endsWith(':free'));
+      if (p === 'openrouter') ids = ['openrouter/free'].concat(ids.filter((x) => x.endsWith(':free')));
+      if (p === 'nvidia') ids = ids.filter((x) => !/embed|rerank|retriever|guard|safety|parse|ocr|clip|reward|nv-.*detect|vision-only|audio|asr|tts|translate/i.test(x));
       if (p === 'gemini') ids = ids.filter((x) => /gemini/.test(x) && !/embedding|image|tts|audio|live/.test(x));
       return ids.sort();
     } catch (e) { return []; }
@@ -102,7 +111,7 @@
   function friendlyError(status, msg, P) {
     if (status === 401 || status === 403 || /api key|API_KEY|invalid.*key/i.test(msg)) return 'La clave no es válida. Revísala en ✳ IA.';
     if (/credit|balance|billing|quota/i.test(msg) && !P.free) return 'Tu cuenta de Claude no tiene saldo. Añádelo en console.anthropic.com → Billing.';
-    if (status === 429 || /quota|rate/i.test(msg)) return P.free ? 'Has llegado al límite gratuito por ahora. Espera un minuto (o hasta mañana) y vuelve a intentarlo.' : 'Demasiadas peticiones seguidas. Espera un minuto.';
+    if (status === 429 || /quota|rate/i.test(msg)) return P.free ? 'Has llegado al límite gratuito de esta IA. Espera un rato, o cambia en ✳ IA a otra gratuita (NVIDIA o Groq dan más usos al día).' : 'Demasiadas peticiones seguidas. Espera un minuto.';
     if (status === 404 || /model.*(not found|does not exist|decommissioned|deprecated)/i.test(msg)) return 'Ese modelo ya no está disponible. Elige otro en ✳ IA.';
     if (status >= 500) return 'El servicio de IA está saturado. Inténtalo en un momento.';
     return msg;
