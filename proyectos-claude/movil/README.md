@@ -1,7 +1,7 @@
 # 📱 Las 5 apps para Android (APK)
 
 Cinco apps independientes que funcionan **en cualquier Android (6.0 o superior)**, sin servidor ni ordenador:
-todo va dentro del teléfono y hablan directamente con Claude.
+todo va dentro del teléfono y hablan directamente con la IA que elijas: **gratis** (Google Gemini, Groq, OpenRouter) o Claude.
 
 | App | Archivo | Qué hace en el móvil |
 |---|---|---|
@@ -17,16 +17,24 @@ todo va dentro del teléfono y hablan directamente con Claude.
 2. Ábrelo. Android pedirá **«Permitir instalar apps de esta fuente»**: actívalo para tu navegador/WhatsApp y pulsa **Instalar**.
 3. Si sale *Play Protect* avisando de que es una app desconocida: **«Instalar de todas formas»** (es normal en apps que no vienen de Google Play).
 
-## Primera vez: tu clave de Claude
+## Primera vez: elige la IA (hay opción GRATIS)
 
-Cada app te la pide al usarla por primera vez (o en el botón **✳ Claude**):
+Cada app te lo pide al usarla por primera vez (o en el botón **✳ IA**). Puedes elegir:
 
-1. Entra en **console.anthropic.com** y crea una cuenta.
-2. En **Billing** añade saldo (unos pocos dólares dan para mucho).
-3. En **API Keys → Create Key**, copia la clave (`sk-ant-...`) y pégala en la app.
+| IA | Precio | Cómo conseguir la clave |
+|---|---|---|
+| **Google Gemini** (recomendado) | **Gratis**, con límites diarios | aistudio.google.com/apikey → *Create API key* (con tu cuenta de Google, sin tarjeta) |
+| **Groq** (Llama) | **Gratis**, con límites por minuto | console.groq.com/keys → *Create API Key* |
+| **OpenRouter** | **Gratis** con modelos `:free` | openrouter.ai/keys → *Create Key* |
+| **Claude** (Anthropic) | De pago | console.anthropic.com → Billing (saldo) → API Keys |
 
-La clave se guarda **solo en ese teléfono**. Si le pasas las apps a otra persona, que ponga **su propia clave**:
-así cada uno paga lo suyo y nadie ve tus datos.
+- La clave se guarda **solo en ese teléfono**. Si pasas las apps a otra persona, que ponga **su propia clave**.
+- Con las IAs gratuitas, la búsqueda en internet (agente de contenido, «Busca», Jarvis) usa un buscador gratuito
+  (DuckDuckGo y, si falla, Wikipedia). Claude trae su propia búsqueda web, más completa.
+- Los planes gratuitos tienen límites: si sale «Has llegado al límite gratuito», espera un minuto (o al día siguiente).
+  El **Equipo de agentes** hace muchas llamadas seguidas y es el que antes llega al límite.
+- En el plan gratuito de Gemini, Google puede usar lo que escribes para mejorar sus productos: no pongas datos muy sensibles.
+- Calidad: Claude es el más capaz; Gemini va muy bien para el día a día.
 
 ## Tus datos
 
@@ -45,9 +53,8 @@ así cada uno paga lo suyo y nadie ve tus datos.
 
 ## Coste
 
-Cada uso de Claude se cobra en la cuenta de quien puso la clave. Lo más caro es el **Equipo de agentes** y el
-**Agente de contenido** (muchas llamadas y búsquedas web). Para gastar menos, en **✳ Claude** elige
-**Claude Sonnet 5.5**. El consumo se ve en console.anthropic.com → Usage.
+Con **Gemini, Groq u OpenRouter (`:free`)** no pagas nada. Con **Claude**, cada uso se cobra en la cuenta de quien
+puso la clave (lo más caro: Equipo de agentes y Agente de contenido); para gastar menos elige **Claude Sonnet 5.5** en **✳ IA**.
 
 ## Volver a fabricar los APK (si cambias algo)
 

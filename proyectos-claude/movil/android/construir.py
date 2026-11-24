@@ -118,7 +118,7 @@ def build(app: str) -> Path:
     OUT.mkdir(exist_ok=True)
     apk = OUT / f"{filename}.apk"
     run("apksigner", "sign", "--ks", str(KEYSTORE), "--ks-pass", f"pass:{KS_PASS}", "--key-pass", f"pass:{KS_PASS}",
-        "--ks-key-alias", "proyectos-claude", "--min-sdk-version", "23", "--out", str(apk), "app-aligned.apk", cwd=b)
+        "--ks-key-alias", "proyectos-claude", "--min-sdk-version", "23", "--v4-signing-enabled", "false", "--out", str(apk), "app-aligned.apk", cwd=b)
     run("apksigner", "verify", str(apk))
     return apk
 

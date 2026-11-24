@@ -85,7 +85,7 @@
 <div class="wrap">
   <h1>Agente de contenido</h1>
   <div class="meta" id="meta"></div>
-  <div class="top"><button type="button" onclick="abrirAjustes()">⚙️ Ajustes</button><button type="button" onclick="Claude.settings('Tu clave de Claude y el modelo que usa la app.')">✳ Claude</button></div>
+  <div class="top"><button type="button" onclick="abrirAjustes()">⚙️ Ajustes</button><button type="button" onclick="Claude.settings('Elige la IA que usa la app y pon tu clave. Google Gemini es gratis.')">✳ IA</button></div>
 
   <div class="clock-row">
     <div class="clock" id="clock">--:--</div>
@@ -118,7 +118,7 @@
   <label>Idioma</label><input name="idioma">
   <label>País (para las noticias)</label><input name="pais" maxlength="20">
   <label>Número de guiones</label><select name="num_guiones"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option></select>
-  <label>Tu marca: tono, audiencia y reglas (Claude la lee antes de escribir)</label><textarea name="marca"></textarea>
+  <label>Tu marca: tono, audiencia y reglas (la IA la lee antes de escribir)</label><textarea name="marca"></textarea>
   <label class="chk"><input type="checkbox" name="auto"> Al abrir la app, preparar el contenido del día si aún no está hecho</label>
   <div class="pill-row" style="justify-content:flex-end"><button type="button" onclick="$('ajustes').classList.remove('open')">Cancelar</button><button class="pill" style="border:0">Guardar</button></div>
 </form></div>

@@ -95,7 +95,8 @@
             'con un gancho brutal en los primeros 2 segundos. Nada de clickbait falso: todo dato debe venir de la investigación.\n\n<marca>\n' + c.marca + '\n</marca>',
           messages: [{ role: 'user', content: `Escribe ${c.num_guiones} guiones distintos (al menos uno basado en una noticia y otro en un hueco de la competencia).\n\n` +
             `<competencia>\n${n.competencia || '(sin datos)'}\n</competencia>\n\n<noticias>\n${n.noticias || '(sin datos)'}\n</noticias>` }] });
-        n.guiones = JSON.parse(r.text).guiones;
+        n.guiones = Claude.parseJSON(r.text).guiones;
+        if (!Array.isArray(n.guiones) || !n.guiones.length) throw new Error('La IA no devolvió guiones. Inténtalo otra vez.');
       } finally { clearInterval(tick); }
       upd(n, 'guiones', { estado: 'hecho', progreso: 1, detalle: `${n.guiones.length} guiones en ${Math.round((Date.now() - t0) / 1000)} s` });
       n.estado.estado = 'hecho';
