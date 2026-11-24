@@ -18,7 +18,7 @@ con el reloj, la luna y el progreso en directo de cada tarea. **Todo en automát
 cd 04-agente-de-contenido
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env      # tu ANTHROPIC_API_KEY, nicho, competidores, hora…
+cp .env.example .env   # opcional si ya tienes la clave en proyectos-claude/.env; aquí nicho, competidores, hora…
 ```
 
 Edita **`marca.md`** con tu tono, audiencia y reglas: es lo que hace que los guiones suenen a ti.

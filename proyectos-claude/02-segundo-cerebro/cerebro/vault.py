@@ -9,7 +9,8 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 ROOT = Path(__file__).resolve().parent.parent
-load_dotenv(ROOT / ".env")
+load_dotenv(ROOT / ".env")  # .env del proyecto (manda si repite una variable)
+load_dotenv(ROOT.parent / ".env")  # .env general de proyectos-claude (p. ej. ANTHROPIC_API_KEY)
 
 VAULT = Path(os.getenv("VAULT_PATH", str(ROOT / "vault"))).expanduser().resolve()
 PROFILE = "PERFIL.md"

@@ -19,7 +19,7 @@ así que **cuanto más la usas, mejor te conoce**.
 cd 02-segundo-cerebro
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env     # pon tu ANTHROPIC_API_KEY
+cp .env.example .env   # opcional si ya tienes la clave en proyectos-claude/.env
 ```
 
 ¿Ya usas Obsidian? Pon `VAULT_PATH=/ruta/a/tu/vault` en `.env`. Si no, usa la carpeta `vault/` incluida

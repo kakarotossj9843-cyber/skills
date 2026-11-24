@@ -19,7 +19,7 @@ Sin configurar nada funciona en **modo demo** (datos de ejemplo). Cada integraci
 cd 01-jarvis
 python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-cp .env.example .env        # y rellénalo
+cp .env.example .env   # opcional si ya tienes la clave en proyectos-claude/.env; aquí Gmail, Notion, WhatsApp…
 ```
 
 ## 2. Claves (lo único que necesitas aportar tú)
