@@ -21,7 +21,7 @@ El jefe siempre pasa el trabajo por **Revisa** y, si pide cambios, lo corrige (m
 cd 05-equipo-de-agentes
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env   # opcional si ya tienes la clave en proyectos-claude/.env;
+cp .env.example .env   # opcional si ya tienes la clave en proyectos-claude/.env
 
 uvicorn equipo.server:app --port 8004     # web → http://localhost:8004
 python -m equipo "Crea una landing para mi curso de IA"   # o desde la terminal
