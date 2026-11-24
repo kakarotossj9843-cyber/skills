@@ -16,6 +16,7 @@ COLS = {
     "client": ("cliente", "client", "customer", "nombre", "name", "customer email"),
     "concept": ("concepto", "concept", "descripcion", "descripción", "description", "detalle", "producto"),
     "category": ("categoria", "categoría", "category"),
+    "currency": ("moneda", "currency", "divisa"),
 }
 
 
@@ -38,8 +39,9 @@ def _date(s: str) -> str:
     return datetime.fromisoformat(s).date().isoformat()
 
 
-def import_csv(content: str, kind: str) -> dict:
-    """kind: 'ventas' o 'banco'. En 'banco' los importes negativos son gastos y los positivos ingresos."""
+def import_csv(content: str, kind: str, currency: str = "") -> dict:
+    """kind: 'ventas' o 'banco'. En 'banco' los importes negativos son gastos y los positivos ingresos.
+    currency: moneda del archivo (USD, PEN, BOB…); si el CSV tiene columna «moneda», manda esa."""
     sample = content[:4096]
     try:
         dialect = csv.Sniffer().sniff(sample, delimiters=",;\t")
@@ -55,11 +57,12 @@ def import_csv(content: str, kind: str) -> dict:
         try:
             day, amount = _date(row[col["day"]]), _num(row[col["amount"]])
             concept = row.get(col["concept"], "") if col["concept"] else ""
+            cur = (row.get(col["currency"], "") if col["currency"] else "") or currency
             if kind == "ventas":
-                db.add_sale(amount, row.get(col["client"], "") if col["client"] else "", concept, day, "csv")
+                db.add_sale(amount, row.get(col["client"], "") if col["client"] else "", concept, day, "csv", currency=cur)
             else:
                 db.add_money("gasto" if amount < 0 else "ingreso", abs(amount), concept,
-                             row.get(col["category"], "") if col["category"] else "", day)
+                             row.get(col["category"], "") if col["category"] else "", day, currency=cur)
             ok += 1
         except (ValueError, KeyError, TypeError):
             errors += 1
@@ -86,7 +89,7 @@ def sync_stripe(days: int = 365) -> dict:
                     continue
                 name = (ch.get("billing_details") or {}).get("name") or (ch.get("billing_details") or {}).get("email") or ""
                 db.add_sale((ch["amount"] - ch.get("amount_refunded", 0)) / 100, name, ch.get("description") or "Stripe",
-                            date.fromtimestamp(ch["created"]).isoformat(), "stripe", ch["id"])
+                            date.fromtimestamp(ch["created"]).isoformat(), "stripe", ch["id"], currency=ch["currency"].upper())
                 n += 1
             if not data.get("has_more"):
                 break

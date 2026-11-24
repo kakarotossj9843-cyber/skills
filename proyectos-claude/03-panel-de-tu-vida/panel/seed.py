@@ -29,17 +29,21 @@ def main() -> None:
     while d <= t:
         growth = 0.55 + 0.45 * (d - start).days / 364
         for _ in range(random.choice([0, 0, 1, 1, 1, 2])):
-            db.add_sale(round(random.uniform(180, 900) * growth, 2), random.choice(CLIENTES[:max(3, int(len(CLIENTES) * growth))]),
-                        random.choice(["Web", "Consultoría", "Mantenimiento", "Formación", "Diseño"]), d.isoformat())
+            usd = random.uniform(180, 900) * growth
+            cur = random.choices(["USD", "PEN", "BOB"], weights=[5, 3, 2])[0]   # ventas en dólares, soles y bolivianos
+            db.add_sale(round(usd * db.DEFAULT_RATES[cur], 2), random.choice(CLIENTES[:max(3, int(len(CLIENTES) * growth))]),
+                        random.choice(["Web", "Consultoría", "Mantenimiento", "Formación", "Diseño"]), d.isoformat(),
+                        currency=cur)
         if d.day == 1:
-            db.add_money("ingreso", 2800, "Sueldo autónomo", "Negocio", d.isoformat())
-            db.add_money("gasto", 850, "Alquiler", "Casa", d.isoformat())
-            db.add_money("gasto", 59.9, "Gimnasio + apps", "Suscripciones", d.isoformat())
+            db.add_money("ingreso", 2800, "Sueldo autónomo", "Negocio", d.isoformat(), currency="USD")
+            db.add_money("gasto", 3200, "Alquiler", "Casa", d.isoformat(), currency="PEN")
+            db.add_money("gasto", 59.9, "Gimnasio + apps", "Suscripciones", d.isoformat(), currency="USD")
         if d.day == 15:
-            db.add_money("ingreso", round(random.uniform(400, 1400) * growth, 2), "Extra proyectos", "Negocio", d.isoformat())
+            db.add_money("ingreso", round(random.uniform(1500, 5000) * growth, 2), "Extra proyectos", "Negocio", d.isoformat(),
+                         currency="PEN")
         if random.random() < 0.5:
-            db.add_money("gasto", round(random.uniform(8, 60), 2), random.choice(["Súper", "Restaurante", "Gasolina", "Cine"]),
-                         random.choice(["Comida", "Ocio", "Transporte"]), d.isoformat())
+            db.add_money("gasto", round(random.uniform(50, 400), 2), random.choice(["Súper", "Restaurante", "Gasolina", "Cine"]),
+                         random.choice(["Comida", "Ocio", "Transporte"]), d.isoformat(), currency="BOB")
         d += timedelta(days=1)
 
     for h in ["Gimnasio", "Leer 20 min", "Dormir 8 h"]:

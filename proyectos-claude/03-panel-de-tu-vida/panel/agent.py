@@ -14,21 +14,23 @@ client = anthropic.Anthropic()
 
 
 @beta_tool
-def registrar_venta(importe: float, cliente: str = "", concepto: str = "", fecha: str = "") -> str:
+def registrar_venta(importe: float, cliente: str = "", concepto: str = "", fecha: str = "", moneda: str = "") -> str:
     """Registra una venta (ingreso del negocio). Si el cliente es nuevo, se añade a clientes activos.
 
     Args:
-        importe: Importe en la moneda del usuario, sin símbolo.
+        importe: Importe sin símbolo, en la moneda indicada.
+        moneda: Código ISO: USD (dólares, $), PEN (soles, S/), BOB (bolivianos, Bs), EUR. Vacío = moneda principal.
         cliente: Nombre del cliente (opcional).
         concepto: Qué se vendió (opcional).
         fecha: Fecha AAAA-MM-DD (vacío = hoy).
     """
-    db.add_sale(importe, cliente, concepto, fecha or None)
-    return f"Venta de {importe} registrada"
+    db.add_sale(importe, cliente, concepto, fecha or None, currency=moneda)
+    return f"Venta de {importe} {db.norm_currency(moneda)} registrada"
 
 
 @beta_tool
-def registrar_movimiento(tipo: str, importe: float, concepto: str = "", categoria: str = "", fecha: str = "") -> str:
+def registrar_movimiento(tipo: str, importe: float, concepto: str = "", categoria: str = "", fecha: str = "",
+                         moneda: str = "") -> str:
     """Registra dinero personal: un ingreso (nómina, cobro) o un gasto (alquiler, comida…). Las VENTAS del negocio van con registrar_venta.
 
     Args:
@@ -37,9 +39,10 @@ def registrar_movimiento(tipo: str, importe: float, concepto: str = "", categori
         concepto: Descripción breve.
         categoria: Categoría (Casa, Comida, Ocio, Transporte, Negocio, Suscripciones, Otros…).
         fecha: Fecha AAAA-MM-DD (vacío = hoy).
+        moneda: Código ISO: USD (dólares, $), PEN (soles, S/), BOB (bolivianos, Bs), EUR. Vacío = moneda principal.
     """
-    db.add_money(tipo, importe, concepto, categoria, fecha or None)
-    return f"{tipo} de {importe} registrado"
+    db.add_money(tipo, importe, concepto, categoria, fecha or None, currency=moneda)
+    return f"{tipo} de {importe} {db.norm_currency(moneda)} registrado"
 
 
 @beta_tool
@@ -118,6 +121,8 @@ def apuntar(texto: str) -> str:
                 "(ventas, gastos, hábitos, tareas, clientes). Regístralo TODO con las herramientas, en paralelo si son "
                 f"varias. Hoy es {db.today().isoformat()}. Hábitos actuales: "
                 + ", ".join(h["name"] for h in db.dashboard()["habitos"]["lista"])
+                + f". Moneda principal: {db.get_settings()['base_currency']}. Si el usuario dice soles o S/ usa PEN; "
+                  "bolivianos o Bs, BOB; dólares o $, USD; euros, EUR. Si no dice moneda, usa la principal"
                 + ". Después confirma en una o dos frases en español qué has apuntado. Si algo es ambiguo (p. ej. "
                   "importe sin número), pregunta en vez de inventar."),
         output_config={"effort": "low"},
@@ -142,7 +147,8 @@ def analizar() -> str:
         max_tokens=4000,
         system=("Eres un coach de negocio y vida, directo y concreto. Analiza los datos del panel del usuario y "
                 "responde en español con: 1) Lo mejor (1-2 líneas), 2) Lo que preocupa (1-2 líneas), "
-                "3) Tres acciones concretas para esta semana. Usa números reales de los datos. Máximo 12 líneas, "
+                "3) Tres acciones concretas para esta semana. Usa números reales de los datos (los importes ya están "
+                "convertidos a la moneda principal indicada en 'monedas.base'). Máximo 12 líneas, "
                 "sin tablas."),
         output_config={"effort": "medium"},
         betas=["server-side-fallback-2026-07-01"],

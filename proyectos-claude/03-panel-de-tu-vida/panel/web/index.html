@@ -106,6 +106,17 @@
   dialog h3 { margin:0 0 12px; color:var(--gold); }
   dialog label { display:block; font-size:13px; color:var(--text-2); margin:10px 0 4px; }
   dialog input, dialog select { width:100%; font:inherit; padding:9px 10px; border-radius:10px; border:1px solid var(--line); background:var(--surface-2); color:var(--text); }
+  .rates { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; }
+  .rates label { margin:0; display:flex; align-items:center; gap:8px; background:var(--surface-2); border:1px solid var(--line); border-radius:10px; padding:4px 4px 4px 10px; }
+  .rates label span { flex:none; color:var(--text); font-weight:700; font-size:13px; }
+  .rates label span:last-child { min-width:36px; }
+  .rates input { flex:1; min-width:0; width:auto !important; text-align:right; border:0 !important; background:transparent !important; padding:6px !important; }
+  @media (max-width:520px) { .rates { grid-template-columns:1fr; } }
+  .rates-foot { display:flex; justify-content:space-between; align-items:center; gap:8px; margin-top:8px; font-size:12px; color:var(--muted); }
+  .rates-foot button { font-size:12px; padding:6px 10px; }
+  .cur-chips { display:flex; gap:6px; flex-wrap:wrap; margin-top:10px; }
+  .cur-chip { font-size:12px; padding:4px 9px; border-radius:999px; background:var(--surface-2); border:1px solid var(--line); color:var(--text-2); }
+  .cur-chip b { color:var(--text); font-weight:700; }
   .toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:var(--gold); color:#1d1606; padding:10px 16px;
     border-radius:12px; font-weight:700; opacity:0; transition:opacity .2s; z-index:30; }
   .empty { color:var(--muted); font-size:13px; padding:8px 0; }
@@ -123,7 +134,7 @@
     <div class="actions">
       <button type="button" onclick="openDlg('dlg-import')">⬆️ Importar CSV</button>
       <button type="button" onclick="syncStripe(this)">💳 Stripe</button>
-      <button type="button" onclick="openDlg('dlg-settings')">⚙️ Objetivos</button>
+      <button type="button" onclick="openDlg('dlg-settings')">⚙️ Objetivos y monedas</button>
     </div>
   </header>
 
@@ -135,6 +146,7 @@
           <div class="hero"><div class="big" id="v-mes">—</div></div>
           <div class="delta" id="v-delta"></div>
           <div class="sub" id="v-sub"></div>
+          <div class="cur-chips" id="v-cur"></div>
           <div class="meter"><div class="track"><div class="fill" id="v-meter"></div></div><div class="lbl"><span id="v-meter-l"></span><span id="v-meter-r"></span></div></div>
         </div>
         <div>
@@ -183,7 +195,7 @@
     <section class="card hl c-claude">
       <h2>✳ Claude</h2>
       <form class="claude-row" onsubmit="return apuntar(event)">
-        <input id="claude-in" placeholder="Cuéntale qué ha pasado: «Hoy fui al gimnasio, vendí 450 € a Marta y gasté 30 € en gasolina»">
+        <input id="claude-in" placeholder="Cuéntale qué ha pasado: «Vendí 450 soles a Marta, cobré 200 dólares y gasté 80 Bs en gasolina»">
         <button class="primary">Apuntar</button>
         <button type="button" onclick="analizar(this)">📈 Analizar mi semana</button>
       </form>
@@ -195,6 +207,7 @@
 <dialog id="dlg-sale"><form method="dialog" onsubmit="return submitSale(event)">
   <h3>Nueva venta</h3>
   <label>Importe</label><input name="amount" type="number" step="0.01" min="0.01" required>
+  <label>Moneda</label><select name="currency" class="cur-select"></select>
   <label>Cliente</label><input name="client">
   <label>Concepto</label><input name="concept">
   <label>Fecha</label><input name="day" type="date">
@@ -205,6 +218,7 @@
   <h3>Nuevo movimiento</h3>
   <label>Tipo</label><select name="kind"><option value="gasto">Gasto</option><option value="ingreso">Ingreso</option></select>
   <label>Importe</label><input name="amount" type="number" step="0.01" min="0.01" required>
+  <label>Moneda</label><select name="currency" class="cur-select"></select>
   <label>Concepto</label><input name="concept">
   <label>Categoría</label><input name="category" list="cats"><datalist id="cats"><option>Casa</option><option>Comida</option><option>Ocio</option><option>Transporte</option><option>Suscripciones</option><option>Negocio</option><option>Otros</option></datalist>
   <label>Fecha</label><input name="day" type="date">
@@ -218,10 +232,13 @@
 </form></dialog>
 
 <dialog id="dlg-settings"><form method="dialog" onsubmit="return submitSettings(event)">
-  <h3>Objetivos</h3>
-  <label>Objetivo de ventas al mes</label><input name="sales_goal_month" type="number" min="0">
-  <label>Objetivo de ahorro al mes</label><input name="savings_goal_month" type="number" min="0">
-  <label>Moneda</label><input name="currency" maxlength="4">
+  <h3>Objetivos y monedas</h3>
+  <label>Moneda principal (todo se convierte a esta)</label><select name="base_currency" class="cur-select"></select>
+  <label>Objetivo de ventas al mes <span class="base-sym"></span></label><input name="sales_goal_month" type="number" min="0">
+  <label>Objetivo de ahorro al mes <span class="base-sym"></span></label><input name="savings_goal_month" type="number" min="0">
+  <label>Tipos de cambio (unidades por 1 dólar)</label>
+  <div class="rates" id="rates"></div>
+  <div class="rates-foot"><span id="rates-upd"></span><button type="button" onclick="updateRates(this)">🌐 Actualizar de internet</button></div>
   <div class="inline-form"><button type="button" onclick="this.closest('dialog').close()">Cancelar</button><button class="primary">Guardar</button></div>
 </form></dialog>
 
@@ -229,6 +246,7 @@
   <h3>Importar CSV</h3>
   <label>¿Qué contiene?</label>
   <select name="kind"><option value="ventas">Ventas (Shopify, facturas, Excel…)</option><option value="banco">Movimientos del banco (+ ingreso / − gasto)</option></select>
+  <label>Moneda del archivo (si no trae columna «moneda»)</label><select name="currency" class="cur-select"></select>
   <label>Archivo .csv (necesita columnas de fecha e importe)</label><input name="file" type="file" accept=".csv,text/csv" required>
   <div class="inline-form"><button type="button" onclick="this.closest('dialog').close()">Cancelar</button><button class="primary">Importar</button></div>
 </form></dialog>
@@ -239,11 +257,13 @@
 <script>
 const $ = (id) => document.getElementById(id);
 const MESES = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
-let D = null, CUR = '€', token = '';
+let D = null, BASE = 'USD', SYM = { USD: '$', PEN: 'S/', BOB: 'Bs', EUR: '€' }, token = '';
 try { token = localStorage.getItem('panel-token') || ''; } catch (e) {}
 
 const fmt = (n, dec = 0) => new Intl.NumberFormat('es-ES', { minimumFractionDigits: dec, maximumFractionDigits: dec, useGrouping: 'always' }).format(n);
-const money = (n) => fmt(n, Math.abs(n) < 100 && n % 1 ? 2 : 0) + ' ' + CUR;
+const moneyIn = (n, code) => { const c = code || BASE, sym = SYM[c] || c, v = fmt(Math.abs(n), Math.abs(n) < 100 && n % 1 ? 2 : 0);
+  return (n < 0 ? '−' : '') + (c === 'EUR' ? v + ' €' : sym + ' ' + v); };
+const money = (n) => moneyIn(n, BASE);
 const compact = (n) => Math.abs(n) >= 1000 ? fmt(n / 1000, n % 1000 ? 1 : 0) + 'K' : fmt(n);
 const mlabel = (ym) => MESES[+ym.slice(5, 7) - 1];
 const esc = (s) => String(s).replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]));
@@ -342,18 +362,25 @@ function delta(el, pct, label) {
 }
 
 function render() {
-  CUR = D.settings.currency || '€';
+  BASE = D.monedas.base; SYM = Object.assign({}, D.monedas.simbolos);
+  document.querySelectorAll('.cur-select').forEach(sel => { const keep = sel.value;
+    sel.innerHTML = Object.keys(D.monedas.tasas).sort((a, b) => (b === BASE) - (a === BASE) || a.localeCompare(b)).map(c => `<option value="${c}">${c} (${SYM[c] || c})</option>`).join('');
+    sel.value = sel.name === 'base_currency' ? BASE : (keep && D.monedas.tasas[keep] ? keep : BASE); });
+  document.querySelectorAll('.base-sym').forEach(el => el.textContent = '(' + (SYM[BASE] || BASE) + ')');
+  if (D.monedas.sin_tasa.length) toast('⚠️ Falta el tipo de cambio de: ' + D.monedas.sin_tasa.join(', '));
   $('date').textContent = new Date(D.today + 'T00:00').toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
   // Ventas
   const v = D.ventas;
   $('v-mes').textContent = money(v.mes);
   delta($('v-delta'), v.pct_vs_mismo_punto, 'vs. mismo día del mes pasado');
   $('v-sub').textContent = `Mes anterior completo: ${money(v.mes_anterior)}`;
+  const pm = v.por_moneda || [];
+  $('v-cur').innerHTML = pm.length > 1 || (pm[0] && pm[0].currency !== BASE) ? pm.map(x => `<span class="cur-chip">${x.currency} <b>${moneyIn(x.total, x.currency)}</b></span>`).join('') : '';
   const vp = v.objetivo ? Math.min(100, v.mes / v.objetivo * 100) : 0;
   $('v-meter').style.width = vp + '%'; $('v-meter-l').textContent = `${fmt(vp)} % del objetivo`; $('v-meter-r').textContent = `objetivo ${money(v.objetivo)}`;
   barChart($('ch-ventas'), v.meses, v.objetivo);
   $('t-ventas').innerHTML = `<table><tr><th>Mes</th><th>Ventas</th></tr>${v.meses.map(m => `<tr><td>${mlabel(m.month)} ${m.month.slice(0, 4)}</td><td>${money(m.total)}</td></tr>`).join('')}</table>
-    <table style="margin-top:10px"><tr><th>Últimas ventas</th><th>Cliente</th><th>Importe</th><th></th></tr>${v.recientes.map(r => `<tr><td>${r.day}</td><td>${esc(r.client || '—')}</td><td>${money(r.amount)}</td><td><button class="x" style="opacity:1" onclick="del('ventas',${r.id})">×</button></td></tr>`).join('')}</table>`;
+    <table style="margin-top:10px"><tr><th>Últimas ventas</th><th>Cliente</th><th>Importe</th><th></th></tr>${v.recientes.map(r => `<tr><td>${r.day}</td><td>${esc(r.client || '—')}</td><td>${moneyIn(r.amount, r.currency)}</td><td><button class="x" style="opacity:1" onclick="del('ventas',${r.id})">×</button></td></tr>`).join('')}</table>`;
   // Hábitos
   const h = D.habitos;
   $('h-sum').textContent = h.total ? `${h.hechos_hoy}/${h.total} hoy` : '';
@@ -381,10 +408,12 @@ function render() {
   const gmax = Math.max(1, ...d.gastos_top.map(g => g.total));
   $('gastos').innerHTML = d.gastos_top.length ? d.gastos_top.map(g => `<div class="hbar"><span>${esc(g.category)}</span><div class="t"><div class="f" style="width:${g.total / gmax * 100}%"></div></div><span class="n">${money(g.total)}</span></div>`).join('') : '<div class="empty">Sin gastos este mes</div>';
   $('t-dinero').innerHTML = `<table><tr><th>Mes</th><th>Ingresos</th><th>Gastos</th><th>Ahorro</th></tr>${d.meses.map(m => `<tr><td>${mlabel(m.month)} ${m.month.slice(0, 4)}</td><td>${money(m.ingresos)}</td><td>${money(m.gastos)}</td><td>${money(m.ahorro)}</td></tr>`).join('')}</table>
-    <table style="margin-top:10px"><tr><th>Últimos movimientos</th><th>Concepto</th><th>Importe</th><th></th></tr>${d.recientes.map(r => `<tr><td>${r.day}</td><td>${esc(r.concept || r.category || '—')}</td><td>${r.kind === 'gasto' ? '−' : '+'}${money(r.amount)}</td><td><button class="x" style="opacity:1" onclick="del('dinero',${r.id})">×</button></td></tr>`).join('')}</table>`;
+    <table style="margin-top:10px"><tr><th>Últimos movimientos</th><th>Concepto</th><th>Importe</th><th></th></tr>${d.recientes.map(r => `<tr><td>${r.day}</td><td>${esc(r.concept || r.category || '—')}</td><td>${r.kind === 'gasto' ? '−' : '+'}${moneyIn(r.amount, r.currency)}</td><td><button class="x" style="opacity:1" onclick="del('dinero',${r.id})">×</button></td></tr>`).join('')}</table>`;
   // Ajustes en el diálogo
   const f = $('dlg-settings').querySelector('form');
-  f.sales_goal_month.value = D.settings.sales_goal_month; f.savings_goal_month.value = D.settings.savings_goal_month; f.currency.value = CUR;
+  f.sales_goal_month.value = D.settings.sales_goal_month; f.savings_goal_month.value = D.settings.savings_goal_month;
+  $('rates').innerHTML = Object.entries(D.monedas.tasas).sort().map(([c, r]) => `<label><span>1 $ =</span><input data-rate="${c}" type="number" step="any" min="0.000001" value="${r}" ${c === 'USD' ? 'readonly' : ''}><span>${c}</span></label>`).join('');
+  $('rates-upd').textContent = D.monedas.actualizado ? 'Actualizado: ' + new Date(D.monedas.actualizado).toLocaleString('es-ES', { dateStyle:'short', timeStyle:'short' }) : 'Tipos de cambio manuales';
 }
 
 async function load() { try { D = await api('/api/dashboard'); render(); } catch (e) { toast('⚠️ ' + e.message); } }
@@ -402,7 +431,25 @@ async function submitForm(e, path, msg) { e.preventDefault(); try { await post(p
 const submitSale = e => submitForm(e, '/api/ventas', 'Venta guardada');
 const submitMoney = e => submitForm(e, '/api/dinero', 'Movimiento guardado');
 const submitClient = e => submitForm(e, '/api/clientes', 'Cliente añadido');
-async function submitSettings(e) { e.preventDefault(); const o = formObj(e.target); for (const k in o) await post('/api/ajustes', { key: k, value: o[k] }); e.target.closest('dialog').close(); toast('Objetivos guardados'); load(); return false; }
+async function submitSettings(e) {
+  e.preventDefault();
+  try {
+    const f = e.target, rates = {};
+    f.querySelectorAll('[data-rate]').forEach(i => rates[i.dataset.rate] = +i.value);
+    await post('/api/ajustes', { key: 'rates', value: JSON.stringify(rates) });
+    await post('/api/ajustes', { key: 'sales_goal_month', value: f.sales_goal_month.value || '0' });
+    await post('/api/ajustes', { key: 'savings_goal_month', value: f.savings_goal_month.value || '0' });
+    await post('/api/ajustes', { key: 'base_currency', value: f.base_currency.value });  // al final: convierte los objetivos
+    f.closest('dialog').close(); toast('Guardado'); load();
+  } catch (err) { toast('⚠️ ' + err.message); }
+  return false;
+}
+async function updateRates(b) {
+  b.disabled = true;
+  try { await post('/api/tipos-de-cambio'); toast('Tipos de cambio actualizados'); await load(); }
+  catch (err) { toast('⚠️ ' + err.message); }
+  b.disabled = false;
+}
 async function submitImport(e) {
   e.preventDefault(); const fd = new FormData(e.target);
   try { const r = await api('/api/importar', { method: 'POST', body: fd }); e.target.closest('dialog').close(); toast(`${r.importadas} filas importadas${r.errores ? `, ${r.errores} con error` : ''}`); load(); }

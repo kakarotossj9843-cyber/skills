@@ -41,6 +41,7 @@ def dashboard():
 
 class Sale(BaseModel):
     amount: float = Field(gt=0)
+    currency: str = ""
     client: str = ""
     concept: str = ""
     day: str | None = None
@@ -48,13 +49,14 @@ class Sale(BaseModel):
 
 @app.post("/api/ventas")
 def add_sale(s: Sale):
-    db.add_sale(s.amount, s.client, s.concept, s.day)
+    db.add_sale(s.amount, s.client, s.concept, s.day, currency=s.currency)
     return {"ok": True}
 
 
 class Money(BaseModel):
     kind: str
     amount: float = Field(gt=0)
+    currency: str = ""
     concept: str = ""
     category: str = ""
     day: str | None = None
@@ -63,7 +65,7 @@ class Money(BaseModel):
 @app.post("/api/dinero")
 def add_money(m: Money):
     try:
-        db.add_money(m.kind, m.amount, m.concept, m.category, m.day)
+        db.add_money(m.kind, m.amount, m.concept, m.category, m.day, currency=m.currency)
     except ValueError as e:
         raise HTTPException(400, str(e))
     return {"ok": True}
@@ -138,16 +140,24 @@ def set_setting(s: Setting):
 
 
 @app.post("/api/importar")
-async def import_csv(kind: str = Form(...), file: UploadFile = File(...)):
+async def import_csv(kind: str = Form(...), file: UploadFile = File(...), currency: str = Form("")):
     raw = await file.read()
     try:
         text = raw.decode("utf-8-sig")
     except UnicodeDecodeError:
         text = raw.decode("latin-1")
     try:
-        return importers.import_csv(text, "ventas" if kind == "ventas" else "banco")
+        return importers.import_csv(text, "ventas" if kind == "ventas" else "banco", currency)
     except ValueError as e:
         raise HTTPException(400, str(e))
+
+
+@app.post("/api/tipos-de-cambio")
+async def update_rates():
+    try:
+        return {"tasas": await run_in_threadpool(db.update_rates_online)}
+    except Exception as e:  # noqa: BLE001
+        raise HTTPException(400, f"No se pudieron descargar los tipos de cambio: {e}")
 
 
 @app.post("/api/stripe")
