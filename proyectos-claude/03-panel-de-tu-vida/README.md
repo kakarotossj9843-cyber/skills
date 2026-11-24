@@ -45,7 +45,8 @@ Cada venta o movimiento se guarda en **su moneda** (USD `$`, PEN `S/`, BOB `Bs`,
 **convierte todo a tu moneda principal** para los totales y gráficos. Debajo de las ventas del mes ves el
 desglose por moneda, y en las listas cada importe aparece en su moneda original.
 
-- Elige la moneda principal en ⚙️ (al cambiarla, los objetivos se convierten solos).
+- La moneda principal es **el sol (S/)** desde el principio, con objetivos de S/ 50.000 en ventas y S/ 10.000 de ahorro
+  al mes. Puedes cambiar ambas cosas en ⚙️ (al cambiar de moneda, los objetivos se convierten solos).
 - Los tipos de cambio (unidades por 1 dólar) se editan a mano o con **🌐 Actualizar de internet**
   (open.er-api.com, gratis y sin clave). Por defecto: 1 $ = 3,75 S/ = 6,96 Bs = 0,92 €.
 - A Claude puedes hablarle en cualquier moneda: «soles», «S/», «bolivianos», «Bs», «dólares», «$».

@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT);
 # Monedas: cuántas unidades equivalen a 1 dólar (se pueden editar o actualizar desde internet)
 CURRENCIES = {"USD": "$", "PEN": "S/", "BOB": "Bs", "EUR": "€"}
 DEFAULT_RATES = {"USD": 1.0, "PEN": 3.75, "BOB": 6.96, "EUR": 0.92}
-DEFAULTS = {"sales_goal_month": "15000", "savings_goal_month": "3000", "base_currency": "USD",
+DEFAULTS = {"sales_goal_month": "50000", "savings_goal_month": "10000", "base_currency": "PEN",
             "rates": json.dumps(DEFAULT_RATES), "rates_updated": ""}
 _migrated = False
 
