@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Jarvis</title>
+<style>
+  :root { --bg:#04161b; --grid:rgba(80,230,255,.06); --cyan:#5ee7ff; --orange:#ff7a4d; --text:#e8fbff; --muted:#7fb3bf; --card:rgba(10,40,48,.85);
+    --cl-bg:#062830; --cl-accent:#5ee7ff; --cl-text:#e8fbff; --cl-muted:#9cc7d1; }
+  * { box-sizing:border-box; }
+  html { background:var(--bg); }
+  body { margin:0; min-height:100vh; background:var(--bg); color:var(--text); font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px); background-size:32px 32px;
+    display:flex; flex-direction:column; align-items:center; padding:20px 16px 28px; }
+  h1 { color:var(--cyan); margin:0 0 6px; font-size:28px; text-shadow:0 0 18px rgba(94,231,255,.6); }
+  .pill { display:inline-block; background:var(--cyan); color:#032026; padding:6px 14px; border-radius:999px; font-weight:700; font-size:13px; }
+  .top { display:flex; gap:8px; margin:12px 0 4px; }
+  .top button, .ghost { background:transparent; color:var(--cyan); border:1px solid rgba(94,231,255,.5); }
+  button { font:inherit; padding:11px 15px; border-radius:12px; border:0; background:var(--cyan); color:#032026; font-weight:700; cursor:pointer; }
+  .stage { position:relative; width:min(380px,100%); aspect-ratio:1; margin-top:6px; }
+  .ring { position:absolute; inset:0; margin:auto; border-radius:50%; border:3px solid var(--cyan); box-shadow:0 0 22px rgba(94,231,255,.45); }
+  .r1 { width:62%; height:62%; border-style:dashed; animation:spin 18s linear infinite; }
+  .r2 { width:48%; height:48%; border-width:5px; border-color:var(--cyan) transparent var(--cyan) transparent; animation:spin 6s linear infinite reverse; }
+  .r3 { width:36%; height:36%; border-width:2px; opacity:.6; }
+  .core { position:absolute; inset:0; margin:auto; width:26%; height:26%; border-radius:50%; background:radial-gradient(#0d4e5c,#062a33);
+    display:grid; place-items:center; font-size:50px; color:var(--orange); text-shadow:0 0 16px var(--orange); }
+  .thinking .core { animation:pulse 1s ease-in-out infinite; }
+  .thinking .r2 { animation-duration:1.5s; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  @keyframes pulse { 50% { transform:scale(1.1); filter:brightness(1.5); } }
+  .app { position:absolute; width:23%; text-align:center; font-size:12.5px; color:var(--muted); background:none; padding:0; font-weight:600; }
+  .app .ic { aspect-ratio:1; border-radius:18px; background:#fff; display:grid; place-items:center; font-size:30px; box-shadow:0 0 18px rgba(255,255,255,.15); margin-bottom:4px; }
+  .app b { display:block; color:var(--cyan); font-size:11px; }
+  .a1 { left:0; top:0; } .a2 { right:0; top:0; } .a3 { left:0; bottom:0; } .a4 { right:0; bottom:0; }
+  .h24 { position:absolute; left:0; right:0; bottom:8%; text-align:center; font-size:28px; font-weight:800; color:var(--cyan); text-shadow:0 0 14px var(--cyan); pointer-events:none; }
+  .chat { width:min(560px,100%); display:flex; flex-direction:column; gap:10px; margin-top:10px; }
+  .log { display:flex; flex-direction:column; gap:8px; }
+  .msg { padding:10px 14px; border-radius:14px; white-space:pre-wrap; line-height:1.45; font-size:15px; max-width:92%; word-break:break-word; }
+  .me { align-self:flex-end; background:var(--cyan); color:#032026; }
+  .bot { align-self:flex-start; background:var(--card); border:1px solid rgba(94,231,255,.3); }
+  .acts { display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; }
+  .acts a { text-decoration:none; background:var(--cyan); color:#032026; padding:8px 12px; border-radius:10px; font-weight:700; font-size:14px; }
+  form.ask { display:flex; gap:8px; position:sticky; bottom:8px; }
+  input, select { flex:1; min-width:0; font:inherit; padding:12px 14px; border-radius:12px; border:1px solid rgba(94,231,255,.4); background:#062830; color:var(--text); font-size:15px; }
+  .sheet { position:fixed; inset:0; background:rgba(0,0,0,.65); display:none; align-items:flex-end; justify-content:center; z-index:50; padding:10px; }
+  .sheet.open { display:flex; }
+  .sheet > div { width:min(560px,100%); max-height:88vh; overflow:auto; background:#05222a; border:1px solid var(--cyan); border-radius:18px; padding:16px; }
+  .sheet h3 { margin:0 0 10px; color:var(--cyan); }
+  .row { display:flex; gap:8px; flex-wrap:wrap; margin:8px 0; }
+  .item { display:flex; align-items:center; gap:10px; padding:9px 10px; border-radius:12px; background:var(--card); margin-bottom:6px; }
+  .item .grow { flex:1; min-width:0; } .item small { color:var(--muted); display:block; }
+  .item .x { background:none; color:var(--muted); padding:4px 8px; font-size:18px; }
+  .chk { width:24px; height:24px; border-radius:50%; border:2px solid var(--cyan); background:transparent; padding:0; flex:none; }
+  .chk.on { background:var(--cyan); }
+  .done .grow { text-decoration:line-through; color:var(--muted); }
+  .day { color:var(--cyan); font-weight:700; font-size:13px; margin:12px 0 6px; text-transform:capitalize; }
+  .empty { color:var(--muted); font-size:14px; padding:8px 0; }
+</style>
+</head>
+<body>
+  <h1>Tu propio Jarvis</h1>
+  <span class="pill">Te resuelve el día a día</span>
+  <div class="top">
+    <button type="button" onclick="abrir('copia')">💾 Copia</button>
+    <button type="button" onclick="Claude.settings('Tu clave de Claude y el modelo que usa Jarvis.')">✳ Claude</button>
+  </div>
+
+  <div class="stage" id="stage">
+    <div class="ring r1"></div><div class="ring r2"></div><div class="ring r3"></div>
+    <div class="core">✳</div>
+    <button class="app a1" onclick="verAgenda()"><div class="ic">📅</div>Agenda<b id="n-agenda"></b></button>
+    <button class="app a2" onclick="verTareas()"><div class="ic">✅</div>Tareas<b id="n-tareas"></b></button>
+    <button class="app a3" onclick="verMemoria()"><div class="ic">🧠</div>Memoria<b id="n-memoria"></b></button>
+    <button class="app a4" onclick="Movil.toast('Pregúntame lo que quieras: busco en internet')"><div class="ic">🌐</div>Internet</button>
+    <div class="h24">24 h</div>
+  </div>
+
+  <div class="chat">
+    <div class="log" id="log"></div>
+    <button class="ghost" id="brief" type="button">☀️ Resumen del día</button>
+    <form class="ask" id="f"><input id="q" placeholder="Pídele algo a Jarvis…" autocomplete="off"><button>Enviar</button></form>
+  </div>
+
+  <div class="sheet" id="agenda" onclick="if(event.target===this)cerrar(this.id)"><div><h3>📅 Agenda</h3>
+    <div class="row"><input id="ev-t" placeholder="Qué (ej. Reunión con Carlos)"></div>
+    <div class="row"><input id="ev-i" type="datetime-local"><button type="button" onclick="crearEvento()">Añadir</button></div>
+    <div id="ev-list"></div><button type="button" class="ghost" onclick="cerrar('agenda')">Cerrar</button></div></div>
+  <div class="sheet" id="tareas" onclick="if(event.target===this)cerrar(this.id)"><div><h3>✅ Tareas</h3>
+    <div class="row"><input id="ta-t" placeholder="Nueva tarea…"><button type="button" onclick="crearTarea()">Añadir</button></div>
+    <div id="ta-list"></div><button type="button" class="ghost" onclick="cerrar('tareas')">Cerrar</button></div></div>
+  <div class="sheet" id="memoria" onclick="if(event.target===this)cerrar(this.id)"><div><h3>🧠 Lo que Jarvis recuerda de ti</h3>
+    <p class="empty" style="margin-top:0">Cuéntale cosas (personas, teléfonos, preferencias) y las guardará aquí.</p>
+    <div id="me-list"></div><button type="button" class="ghost" onclick="cerrar('memoria')">Cerrar</button></div></div>
+  <div class="sheet" id="copia" onclick="if(event.target===this)cerrar(this.id)"><div><h3>💾 Copia de seguridad</h3>
+    <p class="empty" style="margin-top:0">Tu agenda, tareas y memoria se guardan solo en este teléfono.</p>
+    <div style="display:flex;flex-direction:column;gap:8px"><button type="button" onclick="exportar()">⬇️ Guardar copia</button>
+      <button type="button" class="ghost" onclick="importar()">⬆️ Restaurar una copia</button>
+      <button type="button" class="ghost" onclick="olvidarChat()">🧹 Borrar la conversación</button>
+      <button type="button" class="ghost" onclick="cerrar('copia')">Cerrar</button></div></div></div>
+
+<script src="comun/movil.js"></script>
+<script src="comun/claude.js"></script>
+<script src="datos.js"></script>
+<script>
+  const $ = (id) => document.getElementById(id), log = $('log'), stage = $('stage');
+  const api = (path, opts) => JarvisLocal.handle(path, opts);
+  const post = (p, b) => api(p, { method: 'POST', body: JSON.stringify(b || {}) });
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  function abrir(id) { $(id).classList.add('open'); }
+  function cerrar(id) { $(id).classList.remove('open'); }
+
+  function add(text, who, acciones) {
+    const d = document.createElement('div'); d.className = 'msg ' + who; d.textContent = text;
+    if (acciones && acciones.length) {
+      const a = document.createElement('div'); a.className = 'acts';
+      a.innerHTML = acciones.map((x) => `<a href="${esc(x.url)}">${x.icono} ${esc(x.texto)}</a>`).join('');
+      a.querySelectorAll('a').forEach((el) => el.onclick = (e) => { if (window.Android) { e.preventDefault(); Android.openUrl(el.href); } });
+      d.appendChild(a);
+    }
+    log.appendChild(d); d.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  }
+  async function call(fn, label) {
+    if (label) add(label, 'me');
+    add('✳ Pensando…', 'bot'); const pending = log.lastChild;
+    stage.classList.add('thinking'); $('brief').disabled = true;
+    try { const r = await fn(); pending.remove(); add(r.reply, 'bot', r.acciones); }
+    catch (e) { pending.remove(); add('⚠️ ' + e.message, 'bot'); }
+    finally { stage.classList.remove('thinking'); $('brief').disabled = false; contadores(); }
+  }
+  $('f').onsubmit = (e) => { e.preventDefault(); const t = $('q').value.trim(); if (!t) return; $('q').value = ''; call(() => post('api/chat', { message: t }), t); };
+  $('brief').onclick = () => call(() => post('api/brief'), 'Resumen del día');
+
+  async function contadores() {
+    const d = await api('api/datos'), n0 = new Date(), hoy = `${n0.getFullYear()}-${String(n0.getMonth() + 1).padStart(2, '0')}-${String(n0.getDate()).padStart(2, '0')}`;
+    const eh = d.eventos.filter((e) => e.inicio.slice(0, 10) === hoy).length, tp = d.tareas.filter((t) => !t.hecha).length;
+    $('n-agenda').textContent = eh ? `${eh} hoy` : ''; $('n-tareas').textContent = tp ? `${tp} pendiente${tp === 1 ? '' : 's'}` : ''; $('n-memoria').textContent = d.memoria.length ? `${d.memoria.length} datos` : '';
+    return d;
+  }
+  async function verAgenda() {
+    const d = await api('api/datos'); let last = '', html = '';
+    for (const e of d.eventos) {
+      const dia = e.inicio.slice(0, 10);
+      if (dia !== last) { html += `<div class="day">${new Date(dia + 'T12:00').toLocaleDateString('es-PE', { weekday: 'long', day: 'numeric', month: 'long' })}</div>`; last = dia; }
+      html += `<div class="item"><div class="grow">${esc(e.titulo)}<small>${e.inicio.slice(11, 16)}${e.fin ? '–' + e.fin.slice(11, 16) : ''}${e.lugar ? ' · ' + esc(e.lugar) : ''}</small></div><button class="x" onclick="borrarEvento(${e.id})" aria-label="Borrar">×</button></div>`;
+    }
+    $('ev-list').innerHTML = html || '<p class="empty">Nada en los próximos 30 días. Añade algo o díselo a Jarvis: «ponme dentista el jueves a las 10».</p>';
+    if (!$('ev-i').value) { const n = new Date(Date.now() + 3600e3); n.setMinutes(0); $('ev-i').value = new Date(n - n.getTimezoneOffset() * 6e4).toISOString().slice(0, 16); }
+    abrir('agenda');
+  }
+  async function crearEvento() {
+    const t = $('ev-t').value.trim(), i = $('ev-i').value; if (!t || !i) { Movil.toast('Pon qué y cuándo'); return; }
+    await post('api/evento', { titulo: t, inicio: i }); $('ev-t').value = ''; Movil.toast('Evento añadido'); verAgenda(); contadores();
+  }
+  async function borrarEvento(id) { if (!confirm('¿Borrar este evento?')) return; await api('api/evento/' + id, { method: 'DELETE' }); verAgenda(); contadores(); }
+  async function verTareas() {
+    const d = await api('api/datos');
+    $('ta-list').innerHTML = d.tareas.sort((a, b) => !!a.hecha - !!b.hecha).map((t) => `<div class="item ${t.hecha ? 'done' : ''}"><button class="chk ${t.hecha ? 'on' : ''}" onclick="marcarTarea(${t.id}, ${!t.hecha})" aria-label="Hecha"></button>
+      <div class="grow">${esc(t.titulo)}${t.para ? `<small>para el ${esc(t.para)}</small>` : ''}</div><button class="x" onclick="borrarTarea(${t.id})" aria-label="Borrar">×</button></div>`).join('') || '<p class="empty">Nada pendiente 🎉</p>';
+    abrir('tareas');
+  }
+  async function crearTarea() { const t = $('ta-t').value.trim(); if (!t) return; await post('api/tarea', { titulo: t }); $('ta-t').value = ''; verTareas(); contadores(); }
+  async function marcarTarea(id, hecha) { await post('api/tarea/' + id, { hecha }); verTareas(); contadores(); }
+  async function borrarTarea(id) { await api('api/tarea/' + id, { method: 'DELETE' }); verTareas(); contadores(); }
+  async function verMemoria() {
+    const d = await api('api/datos');
+    $('me-list').innerHTML = d.memoria.map((m, i) => `<div class="item"><div class="grow">${esc(m.dato)}<small>${esc(m.fecha)}</small></div><button class="x" onclick="borrarMemoria(${i})" aria-label="Olvidar">×</button></div>`).join('') || '';
+    abrir('memoria');
+  }
+  async function borrarMemoria(i) { await api('api/memoria/' + i, { method: 'DELETE' }); verMemoria(); contadores(); }
+  async function exportar() { Movil.shareFile('jarvis-' + new Date().toISOString().slice(0, 10) + '.json', JSON.stringify(await api('api/copia'))); }
+  async function importar() {
+    const t = await Movil.pickFile('.json,application/json'); if (!t) return;
+    try { await api('api/copia', { method: 'POST', body: t }); cerrar('copia'); Movil.toast('Copia restaurada'); location.reload(); } catch (e) { Movil.toast('⚠️ ' + e.message); }
+  }
+  async function olvidarChat() { await post('api/olvidar-chat'); log.innerHTML = ''; cerrar('copia'); Movil.toast('Conversación borrada'); }
+
+  (async () => {
+    const d = await contadores();
+    for (const m of d.chat) add(m.content, m.role === 'user' ? 'me' : 'bot');
+    if (!d.chat.length) add('Hola, soy Jarvis. Puedo llevar tu agenda y tus tareas, recordar lo importante, buscar en internet y dejarte listos tus WhatsApp y correos. ¿En qué te ayudo?', 'bot');
+  })();
+</script>
+</body>
+</html>

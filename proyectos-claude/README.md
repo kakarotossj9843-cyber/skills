@@ -17,7 +17,12 @@ con interfaz propia, funciona en modo demostración sin configurar nada extra y 
 <img src="05-equipo-de-agentes/captura.png" width="19%">
 </p>
 
-## 📲 En el móvil (y como APK)
+## 📱 Descargar las apps para Android
+
+Las 5 apps están listas como **APK** en [`movil/apk/`](movil/apk/): se instalan en cualquier Android, funcionan sin
+servidor y cada persona pone su propia clave de Claude. Instrucciones: **[movil/README.md](movil/README.md)**.
+
+## 📲 En el móvil (y como APK) (versión con servidor)
 
 Las cinco se pueden **instalar en Android e iPhone** como apps (icono en la pantalla de inicio) y convertir en
 **APK**. Sigue la guía paso a paso: **[GUIA-APK.md](GUIA-APK.md)**. En resumen: `servidor.py` las junta en una sola

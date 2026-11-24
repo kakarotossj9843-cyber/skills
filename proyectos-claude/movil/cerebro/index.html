@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Segundo cerebro</title>
+<style>
+  :root { --cl-bg:#1b0f30; --cl-accent:#b48cff; --cl-text:#f3edff; --cl-muted:#a89bc4; --bg:#0e0818; --purple:#b48cff; --purple2:#7c4dff; --orange:#ff7a4d; --text:#f3edff; --muted:#a89bc4; --card:rgba(40,24,70,.8); }
+  * { box-sizing:border-box; }
+  body { margin:0; min-height:100vh; background:radial-gradient(circle at 50% 30%,#2a1450,var(--bg) 60%); color:var(--text);
+    font-family:system-ui,-apple-system,"Segoe UI",sans-serif; display:flex; flex-direction:column; align-items:center; padding:20px 16px; }
+  h1 { margin:0; font-size:28px; color:var(--purple); text-shadow:0 0 18px rgba(180,140,255,.6); }
+  .pill { margin:8px 0 4px; display:inline-block; border:2px solid var(--purple); border-radius:999px; padding:5px 14px; font-weight:700; font-size:14px; }
+  .count { color:var(--muted); font-size:13px; }
+  canvas { width:min(640px,100%); aspect-ratio:1/0.9; display:block; cursor:pointer; touch-action:none; }
+  .panel { width:min(640px,100%); display:flex; flex-direction:column; gap:10px; }
+  .note { display:none; background:var(--card); border:1px solid rgba(180,140,255,.35); border-radius:14px; padding:12px 14px; white-space:pre-wrap; max-height:30vh; overflow:auto; font-size:14px; }
+  .log { display:flex; flex-direction:column; gap:8px; max-height:35vh; overflow-y:auto; }
+  .msg { padding:10px 14px; border-radius:14px; white-space:pre-wrap; line-height:1.4; font-size:15px; max-width:90%; }
+  .me { align-self:flex-end; background:var(--purple); color:#1a0a33; }
+  .bot { align-self:flex-start; background:var(--card); border:1px solid rgba(180,140,255,.3); }
+  form { display:flex; gap:8px; }
+  input { flex:1; min-width:0; padding:12px 14px; border-radius:12px; border:1px solid rgba(180,140,255,.45); background:#1b0f30; color:var(--text); font-size:15px; }
+  button { padding:12px 14px; border-radius:12px; border:0; background:var(--purple); color:#1a0a33; font-weight:700; cursor:pointer; }
+  .top { display:flex; gap:8px; margin:10px 0 2px; flex-wrap:wrap; justify-content:center; }
+  .top button, .note-actions button { background:transparent; color:var(--purple); border:1px solid rgba(180,140,255,.5); padding:8px 12px; font-size:14px; }
+  .note-actions { display:none; gap:8px; flex-wrap:wrap; }
+  textarea.edit { width:100%; min-height:40vh; padding:12px; border-radius:12px; border:1px solid rgba(180,140,255,.45); background:#1b0f30; color:var(--text); font:14px/1.5 ui-monospace,monospace; }
+  .sheet { position:fixed; inset:0; background:rgba(0,0,0,.6); display:none; align-items:flex-end; justify-content:center; z-index:50; padding:10px; }
+  .sheet.open { display:flex; }
+  .sheet > div { width:min(640px,100%); max-height:88vh; overflow:auto; background:#160b2b; border:1px solid var(--purple); border-radius:18px; padding:16px; }
+  .sheet h3 { margin:0 0 10px; color:var(--purple); }
+  .sheet .item { display:block; width:100%; text-align:left; background:var(--card); color:var(--text); border:1px solid rgba(180,140,255,.2); margin:0 0 6px; font-weight:500; }
+  .sheet .item small { color:var(--muted); display:block; font-weight:400; }
+  .modes { display:flex; gap:8px; }
+  .modes button { flex:1; background:transparent; color:var(--purple); border:1px solid var(--purple); }
+  .modes button.on { background:var(--purple); color:#1a0a33; }
+</style>
+</head>
+<body>
+  <h1>Segundo cerebro</h1>
+  <div class="pill">Biblioteca infinita de contexto</div>
+  <div class="count" id="count"></div>
+  <div class="top">
+    <button type="button" onclick="verNotas()">📚 Notas</button>
+    <button type="button" onclick="nuevaNota()">＋ Nota</button>
+    <button type="button" onclick="abrir('sheet-copia')">💾 Copia</button>
+    <button type="button" onclick="Claude.settings('Tu clave de Claude y el modelo que usa la app.')">✳ Claude</button>
+  </div>
+  <canvas id="c" width="1280" height="1152"></canvas>
+  <div class="panel">
+    <div class="note" id="note"></div>
+    <div class="note-actions" id="note-actions"><button type="button" onclick="editarNota()">✏️ Editar</button><button type="button" onclick="borrarNota()">🗑️ Borrar</button><button type="button" onclick="cerrarNota()">Cerrar</button></div>
+    <div class="modes">
+      <button type="button" class="on" data-m="ask">💬 Preguntar</button>
+      <button type="button" data-m="capture">📥 Capturar idea</button>
+    </div>
+    <div class="log" id="log"></div>
+    <form id="f"><input id="q" placeholder="¿Qué quieres saber o guardar?" autocomplete="off"><button>Enviar</button></form>
+  </div>
+<div class="sheet" id="sheet-notas" onclick="if(event.target===this)cerrar(this.id)"><div><h3>📚 Tus notas</h3><div id="lista"></div><button type="button" onclick="cerrar('sheet-notas')">Cerrar</button></div></div>
+<div class="sheet" id="sheet-editor" onclick="if(event.target===this)cerrar(this.id)"><div><h3 id="ed-title">Nota</h3>
+  <input id="ed-path" placeholder="Carpeta/Título de la nota (ej. 10-Vida/Familia)" style="width:100%;margin-bottom:8px">
+  <textarea class="edit" id="ed-text"></textarea>
+  <div style="display:flex;gap:8px;margin-top:8px"><button type="button" onclick="guardarNota()">Guardar</button><button type="button" onclick="cerrar('sheet-editor')" style="background:transparent;color:var(--purple);border:1px solid var(--purple)">Cancelar</button></div></div></div>
+<div class="sheet" id="sheet-copia" onclick="if(event.target===this)cerrar(this.id)"><div><h3>💾 Copia de seguridad</h3>
+  <p style="color:var(--muted);margin-top:0">Tus notas se guardan solo en este teléfono. Haz una copia de vez en cuando.</p>
+  <div style="display:flex;flex-direction:column;gap:8px"><button type="button" onclick="exportar()">⬇️ Guardar copia</button><button type="button" onclick="importar()" style="background:transparent;color:var(--purple);border:1px solid var(--purple)">⬆️ Restaurar una copia</button><button type="button" onclick="cerrar('sheet-copia')" style="background:transparent;color:var(--muted);border:1px solid rgba(255,255,255,.2)">Cerrar</button></div></div></div>
+<script src="comun/movil.js"></script>
+<script src="comun/claude.js"></script>
+<script src="notas-iniciales.js"></script>
+<script src="datos.js"></script>
+<script>
+const cv = document.getElementById('c'), ctx = cv.getContext('2d'), W = cv.width, H = cv.height;
+const AREA = { '10-Vida':'Tu vida', '20-Negocio':'Tu negocio', '30-Areas':'Tus áreas personales', '00-Bandeja':'Bandeja', 'raíz':'Perfil' };
+let nodes = [], edges = [], mode = 'ask', history = [], hover = null;
+
+async function api(path, opts = {}) {
+  return CerebroLocal.handle(path, opts);   // las notas viven en el teléfono
+}
+let abierta = null;
+const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+function abrir(id) { document.getElementById(id).classList.add('open'); }
+function cerrar(id) { document.getElementById(id).classList.remove('open'); }
+async function mostrarNota(path) {
+  const r = await api('api/note?path=' + encodeURIComponent(path)); abierta = r.path;
+  const el = document.getElementById('note'); el.style.display = 'block'; el.textContent = r.content;
+  document.getElementById('note-actions').style.display = 'flex'; el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+function cerrarNota() { abierta = null; document.getElementById('note').style.display = 'none'; document.getElementById('note-actions').style.display = 'none'; }
+function verNotas() {
+  const ps = CerebroLocal.paths();
+  document.getElementById('lista').innerHTML = ps.map((p) => `<button type="button" class="item" data-p="${esc(p)}">${esc(p.split('/').pop().replace(/\.md$/, ''))}<small>${esc(p.includes('/') ? p.slice(0, p.lastIndexOf('/')) : 'raíz')}</small></button>`).join('') || '<p>Sin notas todavía.</p>';
+  document.querySelectorAll('#lista .item').forEach((b) => b.onclick = () => { cerrar('sheet-notas'); mostrarNota(b.dataset.p); });
+  abrir('sheet-notas');
+}
+let editando = null;
+function nuevaNota() { editando = null; document.getElementById('ed-title').textContent = 'Nueva nota'; document.getElementById('ed-path').value = '10-Vida/'; document.getElementById('ed-path').disabled = false; document.getElementById('ed-text').value = '# '; abrir('sheet-editor'); }
+async function editarNota() {
+  if (!abierta) return; const r = await api('api/note?path=' + encodeURIComponent(abierta)); editando = r.path;
+  document.getElementById('ed-title').textContent = 'Editar nota'; document.getElementById('ed-path').value = r.path.replace(/\.md$/, ''); document.getElementById('ed-path').disabled = true;
+  document.getElementById('ed-text').value = r.content; abrir('sheet-editor');
+}
+async function guardarNota() {
+  const path = editando || document.getElementById('ed-path').value.trim(), text = document.getElementById('ed-text').value;
+  if (!path || path.endsWith('/')) { Movil.toast('Ponle un título a la nota'); return; }
+  try { const r = await api('api/note', { method: 'POST', body: JSON.stringify({ path, content: text, overwrite: !!editando }) }); cerrar('sheet-editor'); Movil.toast('Nota guardada'); await load(); mostrarNota(r.path); }
+  catch (e) { Movil.toast('⚠️ ' + e.message); }
+}
+async function borrarNota() { if (!abierta || !confirm('¿Borrar esta nota?')) return; await api('api/note', { method: 'DELETE', body: JSON.stringify({ path: abierta }) }); cerrarNota(); Movil.toast('Nota borrada'); load(); }
+async function exportar() { Movil.shareFile('segundo-cerebro-' + new Date().toISOString().slice(0, 10) + '.json', JSON.stringify(await api('api/copia'))); }
+async function importar() {
+  const t = await Movil.pickFile('.json,application/json'); if (!t) return;
+  try { await api('api/copia', { method: 'POST', body: t }); cerrar('sheet-copia'); Movil.toast('Copia restaurada'); cerrarNota(); load(); } catch (e) { Movil.toast('⚠️ ' + e.message); }
+}
+
+async function load() {
+  const g = await api('api/graph');
+  document.getElementById('count').textContent = g.nodes.length + ' notas';
+  const old = Object.fromEntries(nodes.map(n => [n.id, n]));
+  const core = { id:'__core', title:'', kind:'core', x:W/2, y:H/2, vx:0, vy:0, fixed:true };
+  const areas = [...new Set(g.nodes.map(n => n.area))];
+  const hubs = areas.map((a, i) => { const ang = -Math.PI/2 + i * 2*Math.PI/areas.length;
+    return old['__'+a] || { id:'__'+a, title:AREA[a] || a, kind:'hub', x:W/2+Math.cos(ang)*260, y:H/2+Math.sin(ang)*260, vx:0, vy:0 }; });
+  const notes = g.nodes.map(n => old[n.id] ? Object.assign(old[n.id], n) :
+    Object.assign({ kind:'note', x:W/2+(Math.random()-.5)*600, y:H/2+(Math.random()-.5)*600, vx:0, vy:0 }, n));
+  nodes = [core, ...hubs, ...notes];
+  const idx = Object.fromEntries(nodes.map(n => [n.id, n]));
+  edges = [...hubs.map(h => [core, h, 'hub']), ...notes.map(n => [idx['__'+n.area], n, 'area']),
+           ...g.edges.map(e => [idx[e.source], idx[e.target], 'link']).filter(e => e[0] && e[1])];
+}
+
+function step() {
+  for (const a of nodes) for (const b of nodes) { if (a === b) continue;
+    const dx = a.x-b.x, dy = a.y-b.y, d2 = dx*dx+dy*dy+0.01, f = 9000/d2; a.vx += dx*f/Math.sqrt(d2); a.vy += dy*f/Math.sqrt(d2); }
+  for (const [a, b, k] of edges) { const L = k==='hub' ? 250 : k==='area' ? 150 : 110, dx = b.x-a.x, dy = b.y-a.y, d = Math.hypot(dx,dy)||1, f = (d-L)*0.012;
+    a.vx += dx/d*f; a.vy += dy/d*f; b.vx -= dx/d*f; b.vy -= dy/d*f; }
+  for (const n of nodes) { if (n.fixed) { n.x = W/2; n.y = H/2; continue; }
+    n.vx += (W/2-n.x)*0.0008; n.vy += (H/2-n.y)*0.0008; n.vx *= 0.82; n.vy *= 0.82; n.x += n.vx; n.y += n.vy;
+    n.x = Math.max(40, Math.min(W-40, n.x)); n.y = Math.max(40, Math.min(H-40, n.y)); }
+}
+
+function draw(t) {
+  ctx.clearRect(0, 0, W, H);
+  for (const [a, b, k] of edges) { ctx.strokeStyle = k==='link' ? 'rgba(255,170,120,.55)' : 'rgba(180,140,255,.45)'; ctx.lineWidth = k==='hub' ? 3 : 2;
+    ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke(); }
+  for (const n of nodes) {
+    if (n.kind === 'core') {
+      const r = 62 + Math.sin(t/500)*3; ctx.shadowColor = '#b48cff'; ctx.shadowBlur = 40;
+      ctx.fillStyle = '#12091f'; ctx.beginPath(); ctx.arc(n.x, n.y, r, 0, 7); ctx.fill(); ctx.shadowBlur = 0;
+      ctx.strokeStyle = '#b48cff'; ctx.lineWidth = 4; ctx.stroke();
+      ctx.strokeStyle = '#ff7a4d'; ctx.lineWidth = 6; ctx.lineCap = 'round';
+      for (let i = 0; i < 12; i++) { const a = i*Math.PI/6 + t/4000; ctx.beginPath(); ctx.moveTo(n.x+Math.cos(a)*10, n.y+Math.sin(a)*10); ctx.lineTo(n.x+Math.cos(a)*36, n.y+Math.sin(a)*36); ctx.stroke(); }
+    } else if (n.kind === 'hub') {
+      ctx.font = 'bold 30px system-ui'; const w = ctx.measureText(n.title).width + 40;
+      ctx.fillStyle = '#c9a8ff'; ctx.beginPath(); ctx.roundRect(n.x-w/2, n.y-26, w, 52, 26); ctx.fill();
+      ctx.fillStyle = '#1a0a33'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(n.title, n.x, n.y+1);
+    } else {
+      ctx.fillStyle = n === hover ? '#ff7a4d' : '#e6dbff'; ctx.shadowColor = '#b48cff'; ctx.shadowBlur = 14;
+      ctx.beginPath(); ctx.arc(n.x, n.y, n === hover ? 14 : 10, 0, 7); ctx.fill(); ctx.shadowBlur = 0;
+      if (n === hover || nodes.length < 40) { ctx.font = '22px system-ui'; ctx.fillStyle = '#d9ccf5'; ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.fillText(n.title, n.x, n.y+16); }
+    }
+  }
+}
+function loop(t) { step(); draw(t); requestAnimationFrame(loop); }
+
+function pick(ev) { const r = cv.getBoundingClientRect(), x = (ev.clientX-r.left)*W/r.width, y = (ev.clientY-r.top)*H/r.height;
+  return nodes.find(n => n.kind === 'note' && Math.hypot(n.x-x, n.y-y) < 70); }
+cv.onmousemove = e => { hover = pick(e) || null; };
+cv.onclick = (e) => { const n = pick(e); if (n) mostrarNota(n.id); };
+
+const log = document.getElementById('log');
+function add(t, who) { const d = document.createElement('div'); d.className = 'msg ' + who; d.textContent = t; log.appendChild(d); log.scrollTop = log.scrollHeight; }
+document.querySelectorAll('.modes button').forEach(b => b.onclick = () => {
+  mode = b.dataset.m; document.querySelectorAll('.modes button').forEach(x => x.classList.toggle('on', x === b));
+  document.getElementById('q').placeholder = mode === 'ask' ? '¿Qué quieres saber o contarme?' : 'Pega una idea, apunte o nota de voz…'; });
+document.getElementById('f').onsubmit = async e => {
+  e.preventDefault(); const q = document.getElementById('q'), t = q.value.trim(); if (!t) return; q.value = ''; add(t, 'me'); add('✳ Pensando…', 'bot'); const pending = log.lastChild;
+  let r; try { r = await api('api/chat', { method:'POST', body: JSON.stringify({ message:t, history, mode }) }); } catch (err) { r = { reply: '⚠️ ' + err.message }; }
+  pending.remove(); add(r.reply || r.detail, 'bot');
+  if (mode === 'ask') history.push({ role:'user', content:t }, { role:'assistant', content:r.reply });
+  load();
+};
+load().then(() => requestAnimationFrame(loop));
+</script>
+</body>
+</html>
